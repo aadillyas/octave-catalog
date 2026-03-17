@@ -1,73 +1,9 @@
 import approvedRaw from './approvedUseCases.json'
+import configRaw from '../../catalog-config.json'
 
 const approved = approvedRaw || []
 
-const HARDCODED_CATALOG = [
-  {
-    id: 'retail',
-    name: 'Retail',
-    tagline: 'From shelf to checkout — optimise every decision in the retail value chain',
-    useCaseCount: 18,
-    valueChains: [
-      { id: 'buying-ranging', label: 'Buying & Ranging', summary: 'Range architecture, assortment planning, and product lifecycle decisions', useCases: ['Assortment Optimisation', 'Range Rationalisation', 'New Product Forecasting'] },
-      { id: 'pricing-promotions', label: 'Pricing & Promotions', summary: 'Competitive pricing strategies and promotional ROI optimisation', useCases: ['Dynamic Pricing', 'Promotion Effectiveness', 'Markdown Optimisation'] },
-      { id: 'supply-chain', label: 'Supply Chain', summary: 'Demand-driven inventory and replenishment across the network', useCases: ['Fresh Procurement Optimisation', 'Replenishment Engine', 'Supplier Allocation'] },
-      { id: 'store-operations', label: 'Store Operations', summary: 'Labour scheduling, shrinkage detection, and in-store efficiency', useCases: ['Labour Scheduling', 'Shrinkage Detection', 'Queue Management'] },
-      { id: 'customer-marketing', label: 'Customer & Marketing', summary: 'Customer segmentation, personalisation, and lifetime value optimisation', useCases: ['Customer Segmentation', 'Churn Prediction', 'Personalised Offers'] },
-      { id: 'people-finance', label: 'People & Finance', summary: 'Workforce analytics and financial performance forecasting', useCases: ['Attrition Prediction', 'Sales Forecasting'] },
-    ]
-  },
-  {
-    id: 'fmcg',
-    name: 'FMCG',
-    tagline: 'From factory to shelf — drive efficiency across production and distribution',
-    useCaseCount: 14,
-    valueChains: [
-      { id: 'production-planning', label: 'Production & Planning', summary: 'Demand-driven production scheduling and capacity optimisation', useCases: ['Production Scheduling', 'Capacity Planning', 'Waste Reduction'] },
-      { id: 'distribution-logistics', label: 'Distribution & Logistics', summary: 'Route optimisation and distribution network efficiency', useCases: ['Route Optimisation', 'Load Planning'] },
-      { id: 'trade-promotions', label: 'Trade & Promotions', summary: 'Trade spend optimisation and promotional effectiveness', useCases: ['Trade Spend Optimisation', 'Promotional Forecasting'] },
-      { id: 'sales-force', label: 'Sales Force', summary: 'Territory planning and sales force effectiveness', useCases: ['Territory Optimisation', 'Outlet Scoring'] },
-      { id: 'marketing', label: 'Marketing', summary: 'Brand performance analytics and media mix modelling', useCases: ['Media Mix Modelling', 'Brand Health Analytics'] },
-    ]
-  },
-  {
-    id: 'leisure-hospitality',
-    name: 'Leisure & Hospitality',
-    tagline: 'From booking to checkout — optimise revenue, guest experience, and operations',
-    useCaseCount: 13,
-    valueChains: [
-      { id: 'acquisition-revenue', label: 'Acquisition & Revenue', summary: 'Dynamic pricing, demand forecasting, and revenue management', useCases: ['Dynamic Room Pricing', 'Demand Forecasting', 'Channel Mix Optimisation'] },
-      { id: 'guest-experience', label: 'Guest Experience', summary: 'Personalisation, sentiment analysis, and service recovery', useCases: ['Guest Personalisation', 'Sentiment Analysis'] },
-      { id: 'food-beverage', label: 'Food & Beverage', summary: 'Menu engineering, wastage reduction, and outlet performance', useCases: ['Menu Optimisation', 'F&B Demand Forecasting'] },
-      { id: 'property-operations', label: 'Property Operations', summary: 'Energy efficiency, maintenance prediction, and asset optimisation', useCases: ['Energy Optimisation', 'Predictive Maintenance'] },
-      { id: 'workforce', label: 'Workforce', summary: 'Labour scheduling, productivity analytics, and rostering', useCases: ['Labour Scheduling', 'Productivity Analytics'] },
-    ]
-  },
-  {
-    id: 'banking-financial-services',
-    name: 'Banking & Financial Services',
-    tagline: 'From acquisition to retention — data-driven decisions across the customer lifecycle',
-    useCaseCount: 11,
-    valueChains: [
-      { id: 'customer-acquisition', label: 'Customer Acquisition', summary: 'Lead scoring, campaign optimisation, and propensity modelling', useCases: ['Lead Scoring', 'Campaign Optimisation'] },
-      { id: 'customer-retention', label: 'Customer Retention', summary: 'Churn prediction, next-best-action, and lifetime value', useCases: ['Churn Prediction', 'Next Best Action', 'CLV Modelling'] },
-      { id: 'underwriting-risk', label: 'Underwriting & Risk', summary: 'Credit risk modelling, fraud detection, and underwriting automation', useCases: ['Credit Scoring', 'Fraud Detection'] },
-      { id: 'agent-productivity', label: 'Agent Productivity', summary: 'Call centre analytics and agent performance optimisation', useCases: ['Call Routing Optimisation', 'Agent Coaching Analytics'] },
-    ]
-  },
-  {
-    id: 'transport-energy',
-    name: 'Transport & Energy',
-    tagline: 'From demand to dispatch — optimise planning, procurement, and network efficiency',
-    useCaseCount: 8,
-    valueChains: [
-      { id: 'demand-planning', label: 'Demand Planning', summary: 'Demand forecasting and capacity planning for transport networks', useCases: ['Passenger Demand Forecasting', 'Capacity Optimisation'] },
-      { id: 'procurement-dispatch', label: 'Procurement & Dispatch', summary: 'Procurement cost optimisation and dispatch scheduling', useCases: ['Fuel Procurement Optimisation', 'Dispatch Scheduling'] },
-    ]
-  },
-]
-
-export const CATALOG = HARDCODED_CATALOG.map(industry => ({
+export const CATALOG = configRaw.industries.map(industry => ({
   ...industry,
   valueChains: industry.valueChains.map(vc => ({
     ...vc,

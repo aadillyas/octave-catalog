@@ -63,6 +63,26 @@
       "action": "Engineer adjusts chiller setpoint on BMS control panel. Under two minutes to implement.",
       "result": "10% reduction in chiller energy consumption across 120 live pilot days, controlled by occupancy and weather. Approximately 5% reduction in total hotel energy bill."
     },
+    "related": [
+      {
+        "id": "fresh-procurement-optimisation",
+        "title": "Fresh Procurement Optimisation",
+        "industry": "Retail",
+        "reason": "Similar demand forecasting and buffer logic applied to fresh food supply chains"
+      },
+      {
+        "id": "predictive-maintenance",
+        "title": "Predictive Maintenance",
+        "industry": "Leisure & Hospitality",
+        "reason": "Complements energy optimisation — reduces equipment failure that drives energy spikes"
+      },
+      {
+        "id": "dynamic-room-pricing",
+        "title": "Dynamic Room Pricing",
+        "industry": "Leisure & Hospitality",
+        "reason": "Occupancy forecasts from this model feed directly into energy setpoint decisions"
+      }
+    ],
     "hasDemo": true,
     "demoPath": "/demos/energy-optimization/demo.html"
   }
