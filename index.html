@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Octave Analytics — Use Case Catalog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body, #root { height: 100%; }
+      body {
+        background: #0A0A0C;
+        color: #F0F0F5;
+        font-family: 'Lato', sans-serif;
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      h1, h2, h3, h4, h5, h6 { font-family: 'Jost', sans-serif; }
+
+      @keyframes expandDown {
+        from { max-height: 0; opacity: 0; }
+        to   { max-height: 1000px; opacity: 1; }
+      }
+      @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to   { transform: translateY(0); opacity: 1; }
+      }
+      @keyframes fadeInUp {
+        from { transform: translateY(16px); opacity: 0; }
+        to   { transform: translateY(0); opacity: 1; }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      .page-enter {
+        animation: fadeInUp 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #0A0A0C; }
+      ::-webkit-scrollbar-thumb { background: #2A2A35; border-radius: 3px; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

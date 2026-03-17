@@ -1,0 +1,38 @@
+{
+  "id": "energy-optimization",
+  "title": "Energy Optimisation",
+  "industry": "Leisure & Hospitality",
+  "valueChain": "Property Operations",
+  "tagline": "Reduce energy consumption through AI-driven chiller and HVAC setpoint optimisation",
+  "status": "approved",
+  "complexity": "Medium",
+  "roi": "10% reduction in chiller energy consumption",
+  "deployTime": "8–12 weeks",
+  "publishedDate": "2026-03-01",
+  "overview": "Chillers are the single largest energy consumer in a hotel, representing 40–55% of the total electricity bill. Yet setpoints are set manually — the same value for a quiet Tuesday morning as a hot, fully-booked weekend. This solution uses five data streams from existing building systems to recommend precise, time-slot specific chiller setpoints that match actual conditions rather than assumptions.",
+  "input": {
+    "summary": "Five data streams collected automatically from existing building systems — no new instrumentation required.",
+    "sources": [
+      { "name": "Building Management System (BMS)", "description": "Real-time chiller operating parameters — current setpoint, compressor load, supply and return water temperatures." },
+      { "name": "Property Management System (PMS)", "description": "Live and forecast occupancy data by room type and time slot. The primary demand signal for the model." },
+      { "name": "Weather Forecast API", "description": "Hourly temperature, humidity, and heat-index forecasts for the next 24 hours. Drives the external heat load calculation." },
+      { "name": "Smart Metering", "description": "15-minute interval energy consumption data. Used to measure baseline and validate savings after each recommendation." },
+      { "name": "Historical Operations Log", "description": "12+ months of past setpoints, occupancy, and consumption. Used to train the baseline consumption model." }
+    ]
+  },
+  "model": {
+    "summary": "Four sequential stages transform today's conditions into a single precise setpoint recommendation.",
+    "stages": [
+      { "name": "Day Type Classification", "description": "Classifies today's occupancy and weather profile against historical patterns to select the right baseline." },
+      { "name": "Baseline Consumption Forecast", "description": "Predicts expected energy draw under current conditions without any setpoint change — the counterfactual." },
+      { "name": "Setpoint Range Analysis", "description": "Tests the feasible setpoint range (±3°C from current) against comfort constraints and equipment limits." },
+      { "name": "Optimisation Engine", "description": "Selects the setpoint that minimises predicted energy consumption while maintaining guest comfort thresholds." }
+    ]
+  },
+  "output": {
+    "summary": "Once per time slot — six times a day — a clear actionable alert is issued to the plant operator.",
+    "delivery": "WhatsApp alert to Plant Operator + email summary to Chief Engineer",
+    "action": "Engineer adjusts chiller setpoint on BMS control panel. Under two minutes to implement.",
+    "result": "10% reduction in chiller energy consumption across 120 live pilot days, controlled by occupancy and weather. Approximately 5% reduction in total hotel energy bill."
+  }
+}
