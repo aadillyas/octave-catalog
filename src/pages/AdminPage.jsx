@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import AdminUploadForm from '../components/AdminUploadForm'
+import DemoTransformer from '../components/DemoTransformer'
 import { CATALOG } from '../data/catalog'
 import catalogConfig from '../../catalog-config.json'
 
@@ -7,8 +8,9 @@ const AdminPage = () => {
   const [authed, setAuthed] = useState(false)
   const [password, setPassword] = useState('')
   const [authError, setAuthError] = useState('')
-  const [tab, setTab] = useState('upload') // 'upload' | 'status' | 'config'
+  const [tab, setTab] = useState('upload') // 'upload' | 'status' | 'config' | 'transform'
   const [uploadSuccess, setUploadSuccess] = useState('')
+  const [transformedFile, setTransformedFile] = useState(null)
   const [publishStates, setPublishStates] = useState({})
   const [publishMessages, setPublishMessages] = useState({})
 
@@ -96,6 +98,7 @@ const AdminPage = () => {
           <button style={tabStyle('upload')} onClick={() => setTab('upload')}>Upload Use Case</button>
           <button style={tabStyle('status')} onClick={() => setTab('status')}>Status & Publish</button>
           <button style={tabStyle('config')} onClick={() => setTab('config')}>Catalog Structure</button>
+          <button style={tabStyle('transform')} onClick={() => setTab('transform')}>Demo Transformer</button>
         </div>
 
         {uploadSuccess && <div style={{ background: 'rgba(10,138,92,0.08)', border: '1px solid rgba(10,138,92,0.2)', borderRadius: '10px', padding: '14px 20px', color: '#0A8A5C', fontSize: '13px', marginBottom: '24px' }}>✓ {uploadSuccess}</div>}
@@ -104,7 +107,7 @@ const AdminPage = () => {
         {tab === 'upload' && (
           <div style={{ display: 'grid', gridTemplateColumns: '420px 1fr', gap: '32px', alignItems: 'start' }}>
             <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', padding: '32px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-              <AdminUploadForm onSuccess={msg => { setUploadSuccess(msg); setTimeout(() => setUploadSuccess(''), 8000) }} />
+              <AdminUploadForm preloadedFile={transformedFile} onSuccess={msg => { setTransformedFile(null); setUploadSuccess(msg); setTimeout(() => setUploadSuccess(''), 8000) }} />
             </div>
             <div style={{ background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', padding: '28px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
               <h3 style={{ fontFamily: 'Jost, sans-serif', fontSize: '15px', fontWeight: 700, marginBottom: '16px', color: '#1A1A2E' }}>How to add a use case</h3>
@@ -197,6 +200,13 @@ const AdminPage = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Demo Transformer tab */}
+        {tab === 'transform' && (
+          <div style={{ maxWidth: '860px' }}>
+            <DemoTransformer onUseFile={file => { setTransformedFile(file); setTab('upload') }} />
           </div>
         )}
 
