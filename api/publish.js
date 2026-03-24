@@ -55,8 +55,8 @@ export default async function handler(req, res) {
         const prs = await listRes.json()
         if (!prs.length) throw new Error('No open PR found and could not create one')
         const pr = prs[0]
-        // Merge it
-        await mergePR(apiBase, headers, pr.number, draftSha)
+        await mergePR(apiBase, headers, pr.number)
+        await regenerateApprovedUseCases(apiBase, headers)
         return res.status(200).json({ success: true, message: `Published via existing PR #${pr.number}` })
       }
       throw new Error(err.message || 'Failed to create PR')
@@ -65,7 +65,10 @@ export default async function handler(req, res) {
     const pr = await prRes.json()
 
     // 4. Merge the PR
-    await mergePR(apiBase, headers, pr.number, draftSha)
+    await mergePR(apiBase, headers, pr.number)
+
+    // 5. Regenerate approvedUseCases.json on main
+    await regenerateApprovedUseCases(apiBase, headers)
 
     return res.status(200).json({ success: true, message: `Published via PR #${pr.number}. Vercel is deploying now.` })
 
@@ -74,7 +77,7 @@ export default async function handler(req, res) {
   }
 }
 
-async function mergePR(apiBase, headers, prNumber, sha) {
+async function mergePR(apiBase, headers, prNumber) {
   const mergeRes = await fetch(`${apiBase}/pulls/${prNumber}/merge`, {
     method: 'PUT', headers,
     body: JSON.stringify({
@@ -87,4 +90,54 @@ async function mergePR(apiBase, headers, prNumber, sha) {
     throw new Error(err.message || 'Failed to merge PR')
   }
   return mergeRes.json()
+}
+
+async function regenerateApprovedUseCases(apiBase, headers) {
+  // Fetch the catalog/ tree from main
+  const treeRes = await fetch(`${apiBase}/git/trees/main?recursive=1`, { headers })
+  if (!treeRes.ok) return
+  const { tree } = await treeRes.json()
+
+  // Find all metadata.json files under catalog/
+  const metaPaths = tree
+    .filter(f => f.type === 'blob' && f.path.startsWith('catalog/') && f.path.endsWith('/metadata.json'))
+    .map(f => f.path)
+
+  // Fetch and parse each metadata file
+  const approvedUseCases = []
+  for (const path of metaPaths) {
+    const r = await fetch(`${apiBase}/contents/${path}?ref=main`, { headers })
+    if (!r.ok) continue
+    const { content } = await r.json()
+    const meta = JSON.parse(Buffer.from(content, 'base64').toString('utf-8'))
+    if (meta.status !== 'approved') continue
+
+    // Check if demo.html exists alongside it
+    const demoPath = path.replace('metadata.json', 'demo.html')
+    const hasDemo = tree.some(f => f.path === demoPath)
+
+    approvedUseCases.push({
+      ...meta,
+      hasDemo,
+      demoPath: hasDemo ? `/demos/${meta.id}/demo.html` : null,
+    })
+  }
+
+  // Get current SHA of approvedUseCases.json so we can update it
+  const filePath = 'src/data/approvedUseCases.json'
+  const existing = await fetch(`${apiBase}/contents/${filePath}?ref=main`, { headers })
+  const existingData = existing.ok ? await existing.json() : null
+
+  const newContent = Buffer.from(JSON.stringify(approvedUseCases, null, 2)).toString('base64')
+
+  await fetch(`${apiBase}/contents/${filePath}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify({
+      message: `Auto-update approvedUseCases.json (${approvedUseCases.length} use case${approvedUseCases.length !== 1 ? 's' : ''})`,
+      content: newContent,
+      sha: existingData?.sha,
+      branch: 'main',
+    }),
+  })
 }
