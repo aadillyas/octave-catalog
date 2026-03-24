@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import catalogConfig from '../../catalog-config.json'
 
 const INDUSTRIES = catalogConfig.industries.map(i => i.name)
@@ -28,15 +28,17 @@ const parseKB = (kbText) => {
   }
 }
 
-const AdminUploadForm = ({ onSuccess }) => {
+const AdminUploadForm = ({ onSuccess, preloadedFile }) => {
   const [step, setStep] = useState(1) // 1 = paste KB, 2 = fill form
   const [kbText, setKbText] = useState('')
   const [kbError, setKbError] = useState('')
   const [form, setForm] = useState({ title: '', industry: '', valueChain: '', tagline: '', complexity: 'Medium', roi: '', deployTime: '', status: 'draft' })
-  const [file, setFile] = useState(null)
+  const [file, setFile] = useState(preloadedFile || null)
   const [dragOver, setDragOver] = useState(false)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => { if (preloadedFile) { setFile(preloadedFile); setStep(2) } }, [preloadedFile])
 
   const set = (k, v) => { setForm(p => ({ ...p, [k]: v })); setErrors(p => ({ ...p, [k]: null })) }
 
@@ -177,7 +179,10 @@ const AdminUploadForm = ({ onSuccess }) => {
               onClick={() => document.getElementById('file-input').click()}
               style={{ border: `2px dashed ${errors.file ? '#E82AAE' : dragOver ? '#E82AAE' : 'rgba(0,0,0,0.15)'}`, borderRadius: '10px', padding: '28px', textAlign: 'center', cursor: 'pointer', background: dragOver ? 'rgba(232,42,174,0.03)' : '#F7F8FA', transition: 'all 200ms' }}>
               {file
-                ? <div><div style={{ color: '#0A8A5C', fontSize: '13px', marginBottom: '2px' }}>✓ {file.name}</div><div style={{ color: '#9CA3AF', fontSize: '11px' }}>{(file.size/1024).toFixed(0)} KB</div></div>
+                ? <div>
+                    <div style={{ color: '#0A8A5C', fontSize: '13px', marginBottom: '2px' }}>✓ {file.name}</div>
+                    <div style={{ color: '#9CA3AF', fontSize: '11px' }}>{(file.size/1024).toFixed(0)} KB{preloadedFile && file === preloadedFile ? ' — from Demo Transformer' : ''}</div>
+                  </div>
                 : <div><div style={{ color: '#6B7280', fontSize: '13px', marginBottom: '2px' }}>Drop demo.html here</div><div style={{ color: '#9CA3AF', fontSize: '11px' }}>or click to browse</div></div>
               }
             </div>
