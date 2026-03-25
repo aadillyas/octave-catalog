@@ -1,73 +1,45 @@
 import { useState } from 'react'
 import Badge from '../components/Badge'
+import { Icon } from '../components/icons'
+
+const cardBase = {
+  background: '#FFFFFF',
+  border: '1px solid rgba(0,0,0,0.08)',
+  borderRadius: '22px',
+  boxShadow: '0 12px 28px rgba(15,23,42,0.05)',
+}
+
+const FlowPanel = ({ title, icon, accent, eyebrow, children }) => (
+  <div style={{ ...cardBase, padding: '22px', position: 'relative', overflow: 'hidden' }}>
+    <div style={{ position: 'absolute', inset: '0 auto auto 0', width: '100%', height: '96px', background: `linear-gradient(180deg, ${accent}10, transparent)` }} />
+    <div style={{ position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '18px' }}>
+        <div>
+          <div style={{ fontSize: '11px', color: accent, fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '8px' }}>{eyebrow}</div>
+          <h3 style={{ fontFamily: 'Jost, sans-serif', fontSize: '18px', fontWeight: 700, color: '#1A1A2E' }}>{title}</h3>
+        </div>
+        <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: `${accent}12`, color: accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Icon name={icon} size={24} />
+        </div>
+      </div>
+      {children}
+    </div>
+  </div>
+)
+
+const MetricCard = ({ label, value, accent }) => (
+  <div style={{ flex: 1, minWidth: '120px', background: '#F8FAFC', borderRadius: '14px', padding: '12px 16px', border: '1px solid rgba(0,0,0,0.06)' }}>
+    <div style={{ fontSize: '10px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 600, letterSpacing: '0.08em', marginBottom: '4px' }}>{label}</div>
+    <div style={{ fontSize: '14px', color: accent || '#1A1A2E', fontWeight: 700 }}>{value || '—'}</div>
+  </div>
+)
 
 const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, catalog }) => {
   const [hovered, setHovered] = useState(false)
+  const accent = useCase.accent || valueChain?.accent || industry?.accent || '#E82AAE'
 
   const launchDemo = () => { if (useCase.demoPath) window.open(useCase.demoPath, '_blank') }
 
-  const col = (title, icon, content) => (
-    <div style={{ flex: 1, background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '14px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-        <span style={{ color: '#E82AAE', fontSize: '16px' }}>{icon}</span>
-        <h3 style={{ fontFamily: 'Jost, sans-serif', fontSize: '16px', fontWeight: 700, color: '#1A1A2E' }}>{title}</h3>
-      </div>
-      {content}
-    </div>
-  )
-
-  const inputCol = col('Input', '↓',
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.6 }}>{useCase.input?.summary}</p>
-      {useCase.input?.sources?.map((s, i) => (
-        <div key={i} style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'rgba(232,42,174,0.08)', border: '1px solid rgba(232,42,174,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#E82AAE', fontWeight: 700, flexShrink: 0 }}>{i+1}</div>
-          <div>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A2E', fontFamily: 'Jost, sans-serif', marginBottom: '2px' }}>{s.name}</div>
-            <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.5 }}>{s.description}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-
-  const modelCol = col('Model', '⬡',
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-      <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.6, marginBottom: '14px' }}>{useCase.model?.summary}</p>
-      <div style={{ position: 'relative' }}>
-        <div style={{ position: 'absolute', left: '11px', top: '22px', bottom: '22px', width: '1px', background: 'linear-gradient(to bottom, #E82AAE, rgba(232,42,174,0.1))' }} />
-        {useCase.model?.stages?.map((s, i) => (
-          <div key={i} style={{ display: 'flex', gap: '12px', marginBottom: i < useCase.model.stages.length - 1 ? '16px' : '0', position: 'relative' }}>
-            <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#E82AAE', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#fff', fontWeight: 700, flexShrink: 0, zIndex: 1 }}>{i+1}</div>
-            <div style={{ paddingTop: '3px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: '#1A1A2E', fontFamily: 'Jost, sans-serif', marginBottom: '2px' }}>{s.name}</div>
-              <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.5 }}>{s.description}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-
-  const outputCol = col('Output', '↑',
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.6 }}>{useCase.output?.summary}</p>
-      {[{ label: 'Delivery', value: useCase.output?.delivery }, { label: 'Action', value: useCase.output?.action }].map(item => (
-        <div key={item.label} style={{ background: '#F7F8FA', borderRadius: '8px', padding: '12px' }}>
-          <div style={{ fontSize: '10px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>{item.label.toUpperCase()}</div>
-          <div style={{ fontSize: '12px', color: '#1A1A2E', lineHeight: 1.5 }}>{item.value}</div>
-        </div>
-      ))}
-      {useCase.output?.result && (
-        <div style={{ background: 'rgba(10,138,92,0.06)', border: '1px solid rgba(10,138,92,0.15)', borderRadius: '8px', padding: '12px' }}>
-          <div style={{ fontSize: '10px', color: '#0A8A5C', fontFamily: 'Jost, sans-serif', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>PROVEN RESULTS</div>
-          <div style={{ fontSize: '12px', color: '#1A1A2E', lineHeight: 1.5 }}>{useCase.output.result}</div>
-        </div>
-      )}
-    </div>
-  )
-
-  // Resolve related use cases from catalog
   const relatedResolved = (useCase.related || []).map(r => {
     if (!catalog) return r
     for (const ind of catalog) {
@@ -79,68 +51,193 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
     return r
   })
 
-  return (
-    <div className="page-enter" style={{ minHeight: '100vh', paddingTop: '56px', background: '#F7F8FA' }}>
+  const flowLegend = [
+    { label: 'Input', icon: 'input', accent: '#4B6BFB' },
+    { label: 'Model', icon: 'model', accent: '#7C3AED' },
+    { label: 'Output', icon: 'output', accent: '#0F9D7A' },
+  ]
 
-      {/* Hero header */}
-      <div style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '32px 48px' }}>
+  return (
+    <div className="page-enter" style={{ minHeight: '100vh', paddingTop: '56px', background: `radial-gradient(circle at top, ${accent}12, transparent 28%), linear-gradient(180deg, #FCFCFE 0%, #F7F8FA 58%, #F2F5FA 100%)` }}>
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '36px clamp(20px, 4vw, 48px)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#6B7280', cursor: 'pointer', fontSize: '13px', padding: 0, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>← Back</button>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '28px', flexWrap: 'wrap' }}>
+            <div style={{ maxWidth: '720px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
                 {useCase.hasDemo && <Badge variant="pink">Live Demo</Badge>}
                 {industry && <Badge variant="dim">{industry.name}</Badge>}
                 {valueChain && <Badge variant="dim">{valueChain.label}</Badge>}
               </div>
-              <h1 style={{ fontFamily: 'Jost, sans-serif', fontSize: '32px', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '8px', color: '#1A1A2E' }}>{useCase.title}</h1>
-              <p style={{ color: '#6B7280', fontSize: '15px', maxWidth: '600px', lineHeight: 1.6 }}>{useCase.tagline}</p>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '260px' }}>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                {[{ label: 'Complexity', value: useCase.complexity }, { label: 'Deploy', value: useCase.deployTime }].map(k => (
-                  <div key={k.label} style={{ flex: 1, background: '#F7F8FA', borderRadius: '10px', padding: '12px 16px', border: '1px solid rgba(0,0,0,0.06)' }}>
-                    <div style={{ fontSize: '10px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '3px' }}>{k.label.toUpperCase()}</div>
-                    <div style={{ fontSize: '13px', color: '#1A1A2E', fontWeight: 600 }}>{k.value || '—'}</div>
-                  </div>
-                ))}
-              </div>
-              {useCase.roi && (
-                <div style={{ background: 'rgba(10,138,92,0.06)', border: '1px solid rgba(10,138,92,0.15)', borderRadius: '10px', padding: '12px 16px' }}>
-                  <div style={{ fontSize: '10px', color: '#0A8A5C', fontFamily: 'Jost, sans-serif', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '3px' }}>ROI</div>
-                  <div style={{ fontSize: '13px', color: '#1A1A2E', fontWeight: 600 }}>{useCase.roi}</div>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', marginBottom: '14px' }}>
+                <div style={{ width: '66px', height: '66px', borderRadius: '20px', background: `${accent}12`, color: accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon name={useCase.iconKey} size={32} />
                 </div>
+                <div>
+                  <h1 style={{ fontFamily: 'Jost, sans-serif', fontSize: '32px', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '8px', color: '#1A1A2E' }}>{useCase.title}</h1>
+                  <p style={{ color: '#6B7280', fontSize: '15px', maxWidth: '600px', lineHeight: 1.6 }}>{useCase.tagline}</p>
+                </div>
+              </div>
+              {useCase.overview && (
+                <p style={{ color: '#1A1A2E', fontSize: '14px', lineHeight: 1.8, maxWidth: '680px', borderLeft: `3px solid ${accent}66`, paddingLeft: '16px', marginTop: '20px' }}>
+                  {useCase.overview}
+                </p>
               )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: '310px', flex: '1 1 320px' }}>
+              <div style={{ ...cardBase, padding: '18px' }}>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                  <MetricCard label="COMPLEXITY" value={useCase.complexity} accent={accent} />
+                  <MetricCard label="DEPLOY" value={useCase.deployTime} accent={accent} />
+                </div>
+                {useCase.roi && (
+                  <div style={{ borderRadius: '16px', padding: '14px 16px', background: `${accent}0E`, border: `1px solid ${accent}22` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', color: accent }}>
+                      <Icon name="results" size={16} />
+                      <div style={{ fontSize: '10px', fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em' }}>ROI SIGNAL</div>
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#1A1A2E', fontWeight: 700 }}>{useCase.roi}</div>
+                  </div>
+                )}
+              </div>
               {useCase.hasDemo && (
-                <button onClick={launchDemo} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-                  style={{ background: hovered ? '#c4228f' : '#E82AAE', border: 'none', borderRadius: '10px', padding: '14px 24px', color: '#fff', fontSize: '15px', fontFamily: 'Jost, sans-serif', fontWeight: 700, cursor: 'pointer', transition: 'background 200ms', width: '100%' }}>
+                <button
+                  onClick={launchDemo}
+                  onMouseEnter={() => setHovered(true)}
+                  onMouseLeave={() => setHovered(false)}
+                  style={{
+                    background: hovered ? '#111827' : accent,
+                    border: 'none',
+                    borderRadius: '16px',
+                    padding: '16px 20px',
+                    color: '#fff',
+                    fontSize: '15px',
+                    fontFamily: 'Jost, sans-serif',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    transition: 'all 200ms',
+                    width: '100%',
+                    boxShadow: hovered ? '0 16px 32px rgba(17,24,39,0.18)' : `0 16px 28px ${accent}2A`,
+                  }}
+                >
                   Launch Interactive Demo →
                 </button>
               )}
+              <div style={{ ...cardBase, padding: '16px 18px' }}>
+                <div style={{ fontSize: '11px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '10px' }}>FLOW LEGEND</div>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  {flowLegend.map(item => (
+                    <div key={item.label} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '999px', background: `${item.accent}12`, color: item.accent, fontSize: '12px', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
+                      <Icon name={item.icon} size={14} />
+                      {item.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-          {useCase.overview && (
-            <p style={{ color: '#1A1A2E', fontSize: '14px', lineHeight: 1.8, maxWidth: '680px', borderLeft: '3px solid rgba(232,42,174,0.4)', paddingLeft: '16px', marginTop: '20px' }}>
-              {useCase.overview}
-            </p>
-          )}
         </div>
       </div>
 
-      {/* 3-column horizontal layout */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 48px 48px' }}>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-          {inputCol}
-          <div style={{ display: 'flex', alignItems: 'center', paddingTop: '60px', color: '#9CA3AF', fontSize: '20px' }}>→</div>
-          {modelCol}
-          <div style={{ display: 'flex', alignItems: 'center', paddingTop: '60px', color: '#9CA3AF', fontSize: '20px' }}>→</div>
-          {outputCol}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px clamp(20px, 4vw, 48px) 48px' }}>
+        <div style={{ ...cardBase, padding: '26px', overflow: 'hidden' }}>
+          <div style={{ marginBottom: '22px' }}>
+            <div style={{ fontSize: '11px', color: accent, fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '8px' }}>SOLUTION FLOW</div>
+            <h2 style={{ fontFamily: 'Jost, sans-serif', fontSize: '24px', fontWeight: 700, color: '#1A1A2E', marginBottom: '8px' }}>How the data becomes a deployable decision</h2>
+            <p style={{ color: '#6B7280', fontSize: '14px', maxWidth: '780px' }}>The page now reads as a flow instead of three isolated text columns: source signals feed the model spine, then the outcome turns into a concrete operating action.</p>
+          </div>
+
+          <div className="usecase-flow-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1.2fr) 110px minmax(280px, 1fr) 110px minmax(280px, 1.05fr)', gap: '0', alignItems: 'stretch' }}>
+            <FlowPanel title="Input Signals" icon="input" accent="#4B6BFB" eyebrow="INPUT">
+              <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.65, marginBottom: '16px' }}>{useCase.input?.summary || 'Key signals entering the workflow.'}</p>
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {(useCase.input?.sources || []).map((source, i) => (
+                  <div key={i} style={{ border: '1px solid rgba(0,0,0,0.06)', background: '#FBFCFF', borderRadius: '16px', padding: '14px 14px 14px 12px', display: 'grid', gridTemplateColumns: '38px 1fr', gap: '12px', alignItems: 'start' }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: `${source.accent || '#4B6BFB'}12`, color: source.accent || '#4B6BFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name={source.iconKey} size={18} />
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A2E', fontFamily: 'Jost, sans-serif' }}>{source.name}</div>
+                        <div style={{ fontSize: '10px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em' }}>SOURCE {String(i + 1).padStart(2, '0')}</div>
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.55 }}>{source.description}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </FlowPanel>
+
+            <div className="usecase-flow-connector" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <svg viewBox="0 0 120 520" style={{ width: '100%', height: '100%', minHeight: '280px', overflow: 'visible' }}>
+                <path d="M20 90 C60 90, 56 260, 96 260" stroke="#4B6BFB" strokeOpacity="0.28" strokeWidth="2.5" fill="none" />
+                <path d="M20 430 C60 430, 56 260, 96 260" stroke="#4B6BFB" strokeOpacity="0.14" strokeWidth="2.5" fill="none" />
+                <circle cx="96" cy="260" r="9" fill="#4B6BFB" fillOpacity="0.15" />
+                <circle cx="96" cy="260" r="4" fill="#4B6BFB" />
+              </svg>
+            </div>
+
+            <FlowPanel title="Model Spine" icon="model" accent="#7C3AED" eyebrow="MODEL">
+              <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.65, marginBottom: '18px' }}>{useCase.model?.summary || 'Core modeling logic and sequencing.'}</p>
+              <div style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', left: '19px', top: '22px', bottom: '22px', width: '2px', background: 'linear-gradient(180deg, #7C3AED, rgba(124,58,237,0.08))' }} />
+                <div style={{ display: 'grid', gap: '14px' }}>
+                  {(useCase.model?.stages || []).map((stage, i) => (
+                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '40px 1fr', gap: '14px', position: 'relative' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#7C3AED', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, fontFamily: 'Jost, sans-serif', zIndex: 1 }}>{i + 1}</div>
+                      <div style={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.06)', background: '#FCFAFF', padding: '14px 14px 14px 16px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A2E', fontFamily: 'Jost, sans-serif', marginBottom: '4px' }}>{stage.name}</div>
+                        <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.55 }}>{stage.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </FlowPanel>
+
+            <div className="usecase-flow-connector" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <svg viewBox="0 0 120 520" style={{ width: '100%', height: '100%', minHeight: '280px', overflow: 'visible' }}>
+                <path d="M18 260 C58 260, 60 100, 100 100" stroke="#0F9D7A" strokeOpacity="0.28" strokeWidth="2.5" fill="none" />
+                <path d="M18 260 C58 260, 60 420, 100 420" stroke="#0F9D7A" strokeOpacity="0.18" strokeWidth="2.5" fill="none" />
+                <circle cx="18" cy="260" r="9" fill="#0F9D7A" fillOpacity="0.15" />
+                <circle cx="18" cy="260" r="4" fill="#0F9D7A" />
+              </svg>
+            </div>
+
+            <FlowPanel title="Operational Output" icon="output" accent="#0F9D7A" eyebrow="OUTPUT">
+              <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.65, marginBottom: '16px' }}>{useCase.output?.summary || 'Decisioning outputs and next actions.'}</p>
+              <div style={{ display: 'grid', gap: '12px' }}>
+                {[
+                  { label: 'Delivery', value: useCase.output?.delivery, icon: 'delivery', accent: '#4B6BFB' },
+                  { label: 'Action', value: useCase.output?.action, icon: 'action', accent: '#F97316' },
+                ].map(item => (
+                  <div key={item.label} style={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.06)', background: '#F8FAFC', padding: '14px', display: 'grid', gridTemplateColumns: '40px 1fr', gap: '12px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${item.accent}12`, color: item.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon name={item.icon} size={18} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '4px' }}>{item.label.toUpperCase()}</div>
+                      <div style={{ fontSize: '12px', color: '#1A1A2E', lineHeight: 1.55 }}>{item.value || '—'}</div>
+                    </div>
+                  </div>
+                ))}
+                {useCase.output?.result && (
+                  <div style={{ borderRadius: '18px', padding: '16px', background: 'rgba(10,138,92,0.06)', border: '1px solid rgba(10,138,92,0.16)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#0A8A5C', marginBottom: '8px' }}>
+                      <Icon name="results" size={16} />
+                      <div style={{ fontSize: '10px', fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em' }}>PROVEN RESULTS</div>
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#1A1A2E', lineHeight: 1.6 }}>{useCase.output.result}</div>
+                  </div>
+                )}
+              </div>
+            </FlowPanel>
+          </div>
         </div>
       </div>
 
-      {/* Related use cases */}
       {relatedResolved.length > 0 && (
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 48px 120px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 clamp(20px, 4vw, 48px) 120px' }}>
           <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '40px' }}>
             <h3 style={{ fontFamily: 'Jost, sans-serif', fontSize: '18px', fontWeight: 700, color: '#1A1A2E', marginBottom: '6px' }}>
               You should also look at
@@ -151,23 +248,31 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
               {relatedResolved.map((r, i) => {
                 const isClickable = r.hasDemo && onSelectUseCase
+                const relatedAccent = r.accent || '#6B7280'
                 return (
                   <div key={i}
                     onClick={() => isClickable && onSelectUseCase(r, r.vcObj)}
                     style={{
-                      background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
+                      background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '18px',
                       padding: '20px', cursor: isClickable ? 'pointer' : 'default',
-                      transition: 'all 200ms', boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                      transition: 'all 200ms', boxShadow: '0 6px 18px rgba(15,23,42,0.04)',
                     }}
-                    onMouseEnter={e => { if (isClickable) { e.currentTarget.style.borderColor = 'rgba(232,42,174,0.3)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)' } }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'; e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.04)' }}
+                    onMouseEnter={e => { if (isClickable) { e.currentTarget.style.borderColor = `${relatedAccent}44`; e.currentTarget.style.boxShadow = `0 14px 28px ${relatedAccent}16` } }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(15,23,42,0.04)' }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '11px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>{r.industry}</span>
-                      {r.hasDemo && <Badge variant="pink">Live Demo</Badge>}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: `${relatedAccent}12`, color: relatedAccent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon name={r.iconKey} size={18} />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '11px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>{r.industry}</span>
+                          {r.hasDemo && <Badge variant="pink">Live Demo</Badge>}
+                        </div>
+                        <div style={{ fontFamily: 'Jost, sans-serif', fontSize: '14px', fontWeight: 700, color: '#1A1A2E', marginBottom: '8px' }}>{r.title}</div>
+                        <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.5 }}>{r.reason}</div>
+                      </div>
                     </div>
-                    <div style={{ fontFamily: 'Jost, sans-serif', fontSize: '14px', fontWeight: 700, color: '#1A1A2E', marginBottom: '8px' }}>{r.title}</div>
-                    <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.5 }}>{r.reason}</div>
                   </div>
                 )
               })}
@@ -178,4 +283,5 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
     </div>
   )
 }
+
 export default UseCasePage
