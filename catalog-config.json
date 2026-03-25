@@ -240,7 +240,8 @@
           "summary": "Call centre analytics and agent performance optimisation",
           "useCases": [
             "Call Routing Optimisation",
-            "Agent Coaching Analytics"
+            "Agent Coaching Analytics",
+            "Lapse Prevention"
           ]
         }
       ]
