@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import Badge from '../components/Badge'
 import { Icon } from '../components/icons'
+import { tokens } from '../styles/tokens'
 
 const cardBase = {
-  background: '#FFFFFF',
-  border: '1px solid rgba(0,0,0,0.08)',
+  background: tokens.surface,
+  border: `1px solid ${tokens.border}`,
   borderRadius: '22px',
-  boxShadow: '0 12px 28px rgba(15,23,42,0.05)',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
 }
 
 const FlowPanel = ({ title, icon, accent, eyebrow, children }) => (
@@ -16,7 +17,7 @@ const FlowPanel = ({ title, icon, accent, eyebrow, children }) => (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '18px' }}>
         <div>
           <div style={{ fontSize: '11px', color: accent, fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '8px' }}>{eyebrow}</div>
-          <h3 style={{ fontFamily: 'Jost, sans-serif', fontSize: '18px', fontWeight: 700, color: '#1A1A2E' }}>{title}</h3>
+          <h3 style={{ fontFamily: 'Jost, sans-serif', fontSize: '18px', fontWeight: 700, color: tokens.text }}>{title}</h3>
         </div>
         <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: `${accent}12`, color: accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Icon name={icon} size={24} />
@@ -28,9 +29,9 @@ const FlowPanel = ({ title, icon, accent, eyebrow, children }) => (
 )
 
 const MetricCard = ({ label, value, accent }) => (
-  <div style={{ flex: 1, minWidth: '120px', background: '#F8FAFC', borderRadius: '14px', padding: '12px 16px', border: '1px solid rgba(0,0,0,0.06)' }}>
-    <div style={{ fontSize: '10px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 600, letterSpacing: '0.08em', marginBottom: '4px' }}>{label}</div>
-    <div style={{ fontSize: '14px', color: accent || '#1A1A2E', fontWeight: 700 }}>{value || '—'}</div>
+  <div style={{ flex: 1, minWidth: '120px', background: tokens.surface2, borderRadius: '14px', padding: '12px 16px', border: `1px solid ${tokens.border}` }}>
+    <div style={{ fontSize: '10px', color: tokens.dim, fontFamily: 'Jost, sans-serif', fontWeight: 600, letterSpacing: '0.08em', marginBottom: '4px' }}>{label}</div>
+    <div style={{ fontSize: '14px', color: accent || tokens.text, fontWeight: 700 }}>{value || '—'}</div>
   </div>
 )
 
@@ -52,16 +53,16 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
   })
 
   const flowLegend = [
-    { label: 'Input', icon: 'input', accent: '#4B6BFB' },
-    { label: 'Model', icon: 'model', accent: '#7C3AED' },
-    { label: 'Output', icon: 'output', accent: '#0F9D7A' },
+    { label: 'Input', icon: 'input', accent: tokens.pink },
+    { label: 'Model', icon: 'model', accent: tokens.pink },
+    { label: 'Output', icon: 'output', accent: tokens.tealText },
   ]
 
   return (
-    <div className="page-enter" style={{ minHeight: '100vh', paddingTop: '56px', background: `radial-gradient(circle at top, ${accent}12, transparent 28%), linear-gradient(180deg, #FCFCFE 0%, #F7F8FA 58%, #F2F5FA 100%)` }}>
-      <div style={{ background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '36px clamp(20px, 4vw, 48px)' }}>
+    <div className="page-enter" style={{ minHeight: '100vh', paddingTop: '56px', background: `radial-gradient(circle at top, ${accent}12, transparent 28%), ${tokens.bg}` }}>
+      <div style={{ background: tokens.surface, borderBottom: `1px solid ${tokens.border}`, padding: '36px clamp(20px, 4vw, 48px)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#6B7280', cursor: 'pointer', fontSize: '13px', padding: 0, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>← Back</button>
+          <button onClick={onBack} style={{ background: 'none', border: 'none', color: tokens.muted, cursor: 'pointer', fontSize: '13px', padding: 0, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>← Back</button>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '28px', flexWrap: 'wrap' }}>
             <div style={{ maxWidth: '720px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
@@ -74,12 +75,12 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
                   <Icon name={useCase.iconKey} size={32} />
                 </div>
                 <div>
-                  <h1 style={{ fontFamily: 'Jost, sans-serif', fontSize: '32px', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '8px', color: '#1A1A2E' }}>{useCase.title}</h1>
-                  <p style={{ color: '#6B7280', fontSize: '15px', maxWidth: '600px', lineHeight: 1.6 }}>{useCase.tagline}</p>
+                  <h1 style={{ fontFamily: 'Jost, sans-serif', fontSize: '32px', fontWeight: 700, letterSpacing: '-0.5px', marginBottom: '8px', color: tokens.text }}>{useCase.title}</h1>
+                  <p style={{ color: tokens.muted, fontSize: '15px', maxWidth: '600px', lineHeight: 1.6 }}>{useCase.tagline}</p>
                 </div>
               </div>
               {useCase.overview && (
-                <p style={{ color: '#1A1A2E', fontSize: '14px', lineHeight: 1.8, maxWidth: '680px', borderLeft: `3px solid ${accent}66`, paddingLeft: '16px', marginTop: '20px' }}>
+                <p style={{ color: tokens.text, fontSize: '14px', lineHeight: 1.8, maxWidth: '680px', borderLeft: `3px solid ${accent}66`, paddingLeft: '16px', marginTop: '20px' }}>
                   {useCase.overview}
                 </p>
               )}
@@ -96,7 +97,7 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
                       <Icon name="results" size={16} />
                       <div style={{ fontSize: '10px', fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em' }}>ROI SIGNAL</div>
                     </div>
-                    <div style={{ fontSize: '14px', color: '#1A1A2E', fontWeight: 700 }}>{useCase.roi}</div>
+                    <div style={{ fontSize: '14px', color: tokens.text, fontWeight: 700 }}>{useCase.roi}</div>
                   </div>
                 )}
               </div>
@@ -106,7 +107,7 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
                   onMouseEnter={() => setHovered(true)}
                   onMouseLeave={() => setHovered(false)}
                   style={{
-                    background: hovered ? '#111827' : accent,
+                    background: hovered ? tokens.text : accent,
                     border: 'none',
                     borderRadius: '16px',
                     padding: '16px 20px',
@@ -117,14 +118,14 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
                     cursor: 'pointer',
                     transition: 'all 200ms',
                     width: '100%',
-                    boxShadow: hovered ? '0 16px 32px rgba(17,24,39,0.18)' : `0 16px 28px ${accent}2A`,
+                    boxShadow: hovered ? '0 4px 12px rgba(0,0,0,0.12)' : `0 4px 12px ${accent}22`,
                   }}
                 >
                   Launch Interactive Demo →
                 </button>
               )}
               <div style={{ ...cardBase, padding: '16px 18px' }}>
-                <div style={{ fontSize: '11px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '10px' }}>FLOW LEGEND</div>
+                <div style={{ fontSize: '11px', color: tokens.dim, fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '10px' }}>FLOW LEGEND</div>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   {flowLegend.map(item => (
                     <div key={item.label} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '999px', background: `${item.accent}12`, color: item.accent, fontSize: '12px', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
@@ -143,25 +144,25 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
         <div style={{ ...cardBase, padding: '26px', overflow: 'hidden' }}>
           <div style={{ marginBottom: '22px' }}>
             <div style={{ fontSize: '11px', color: accent, fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '8px' }}>SOLUTION FLOW</div>
-            <h2 style={{ fontFamily: 'Jost, sans-serif', fontSize: '24px', fontWeight: 700, color: '#1A1A2E', marginBottom: '8px' }}>How the data becomes a deployable decision</h2>
-            <p style={{ color: '#6B7280', fontSize: '14px', maxWidth: '780px' }}>The page now reads as a flow instead of three isolated text columns: source signals feed the model spine, then the outcome turns into a concrete operating action.</p>
+            <h2 style={{ fontFamily: 'Jost, sans-serif', fontSize: '24px', fontWeight: 700, color: tokens.text, marginBottom: '8px' }}>How the data becomes a deployable decision</h2>
+            <p style={{ color: tokens.muted, fontSize: '14px', maxWidth: '780px' }}>The page now reads as a flow instead of three isolated text columns: source signals feed the model spine, then the outcome turns into a concrete operating action.</p>
           </div>
 
           <div className="usecase-flow-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(280px, 1.2fr) 110px minmax(280px, 1fr) 110px minmax(280px, 1.05fr)', gap: '0', alignItems: 'stretch' }}>
-            <FlowPanel title="Input Signals" icon="input" accent="#4B6BFB" eyebrow="INPUT">
-              <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.65, marginBottom: '16px' }}>{useCase.input?.summary || 'Key signals entering the workflow.'}</p>
+            <FlowPanel title="Input Signals" icon="input" accent={tokens.pink} eyebrow="INPUT">
+              <p style={{ fontSize: '13px', color: tokens.muted, lineHeight: 1.65, marginBottom: '16px' }}>{useCase.input?.summary || 'Key signals entering the workflow.'}</p>
               <div style={{ display: 'grid', gap: '12px' }}>
                 {(useCase.input?.sources || []).map((source, i) => (
-                  <div key={i} style={{ border: '1px solid rgba(0,0,0,0.06)', background: '#FBFCFF', borderRadius: '16px', padding: '14px 14px 14px 12px', display: 'grid', gridTemplateColumns: '38px 1fr', gap: '12px', alignItems: 'start' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: `${source.accent || '#4B6BFB'}12`, color: source.accent || '#4B6BFB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div key={i} style={{ border: `1px solid ${tokens.border}`, background: tokens.surface2, borderRadius: '16px', padding: '14px 14px 14px 12px', display: 'grid', gridTemplateColumns: '38px 1fr', gap: '12px', alignItems: 'start' }}>
+                    <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: `${source.accent || tokens.pink}12`, color: source.accent || tokens.pink, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name={source.iconKey} size={18} />
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A2E', fontFamily: 'Jost, sans-serif' }}>{source.name}</div>
-                        <div style={{ fontSize: '10px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em' }}>SOURCE {String(i + 1).padStart(2, '0')}</div>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: tokens.text, fontFamily: 'Jost, sans-serif' }}>{source.name}</div>
+                        <div style={{ fontSize: '10px', color: tokens.dim, fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em' }}>SOURCE {String(i + 1).padStart(2, '0')}</div>
                       </div>
-                      <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.55 }}>{source.description}</div>
+                      <div style={{ fontSize: '12px', color: tokens.muted, lineHeight: 1.55 }}>{source.description}</div>
                     </div>
                   </div>
                 ))}
@@ -170,24 +171,24 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
 
             <div className="usecase-flow-connector" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
               <svg viewBox="0 0 120 520" style={{ width: '100%', height: '100%', minHeight: '280px', overflow: 'visible' }}>
-                <path d="M20 90 C60 90, 56 260, 96 260" stroke="#4B6BFB" strokeOpacity="0.28" strokeWidth="2.5" fill="none" />
-                <path d="M20 430 C60 430, 56 260, 96 260" stroke="#4B6BFB" strokeOpacity="0.14" strokeWidth="2.5" fill="none" />
-                <circle cx="96" cy="260" r="9" fill="#4B6BFB" fillOpacity="0.15" />
-                <circle cx="96" cy="260" r="4" fill="#4B6BFB" />
+                <path d="M20 90 C60 90, 56 260, 96 260" stroke={tokens.pink} strokeOpacity="0.28" strokeWidth="2.5" fill="none" />
+                <path d="M20 430 C60 430, 56 260, 96 260" stroke={tokens.pink} strokeOpacity="0.14" strokeWidth="2.5" fill="none" />
+                <circle cx="96" cy="260" r="9" fill={tokens.pink} fillOpacity="0.15" />
+                <circle cx="96" cy="260" r="4" fill={tokens.pink} />
               </svg>
             </div>
 
-            <FlowPanel title="Model Spine" icon="model" accent="#7C3AED" eyebrow="MODEL">
-              <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.65, marginBottom: '18px' }}>{useCase.model?.summary || 'Core modeling logic and sequencing.'}</p>
+            <FlowPanel title="Model Spine" icon="model" accent={tokens.pink} eyebrow="MODEL">
+              <p style={{ fontSize: '13px', color: tokens.muted, lineHeight: 1.65, marginBottom: '18px' }}>{useCase.model?.summary || 'Core modeling logic and sequencing.'}</p>
               <div style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', left: '19px', top: '22px', bottom: '22px', width: '2px', background: 'linear-gradient(180deg, #7C3AED, rgba(124,58,237,0.08))' }} />
+                <div style={{ position: 'absolute', left: '19px', top: '22px', bottom: '22px', width: '2px', background: `linear-gradient(180deg, ${tokens.pink}, rgba(232,42,174,0.08))` }} />
                 <div style={{ display: 'grid', gap: '14px' }}>
                   {(useCase.model?.stages || []).map((stage, i) => (
                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '40px 1fr', gap: '14px', position: 'relative' }}>
-                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#7C3AED', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, fontFamily: 'Jost, sans-serif', zIndex: 1 }}>{i + 1}</div>
-                      <div style={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.06)', background: '#FCFAFF', padding: '14px 14px 14px 16px' }}>
-                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#1A1A2E', fontFamily: 'Jost, sans-serif', marginBottom: '4px' }}>{stage.name}</div>
-                        <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.55 }}>{stage.description}</div>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: tokens.pink, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, fontFamily: 'Jost, sans-serif', zIndex: 1 }}>{i + 1}</div>
+                      <div style={{ borderRadius: '16px', border: `1px solid ${tokens.border}`, background: tokens.surface2, padding: '14px 14px 14px 16px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: tokens.text, fontFamily: 'Jost, sans-serif', marginBottom: '4px' }}>{stage.name}</div>
+                        <div style={{ fontSize: '12px', color: tokens.muted, lineHeight: 1.55 }}>{stage.description}</div>
                       </div>
                     </div>
                   ))}
@@ -197,37 +198,37 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
 
             <div className="usecase-flow-connector" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
               <svg viewBox="0 0 120 520" style={{ width: '100%', height: '100%', minHeight: '280px', overflow: 'visible' }}>
-                <path d="M18 260 C58 260, 60 100, 100 100" stroke="#0F9D7A" strokeOpacity="0.28" strokeWidth="2.5" fill="none" />
-                <path d="M18 260 C58 260, 60 420, 100 420" stroke="#0F9D7A" strokeOpacity="0.18" strokeWidth="2.5" fill="none" />
-                <circle cx="18" cy="260" r="9" fill="#0F9D7A" fillOpacity="0.15" />
-                <circle cx="18" cy="260" r="4" fill="#0F9D7A" />
+                <path d="M18 260 C58 260, 60 100, 100 100" stroke={tokens.tealText} strokeOpacity="0.28" strokeWidth="2.5" fill="none" />
+                <path d="M18 260 C58 260, 60 420, 100 420" stroke={tokens.tealText} strokeOpacity="0.18" strokeWidth="2.5" fill="none" />
+                <circle cx="18" cy="260" r="9" fill={tokens.teal} fillOpacity="0.2" />
+                <circle cx="18" cy="260" r="4" fill={tokens.tealText} />
               </svg>
             </div>
 
-            <FlowPanel title="Operational Output" icon="output" accent="#0F9D7A" eyebrow="OUTPUT">
-              <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.65, marginBottom: '16px' }}>{useCase.output?.summary || 'Decisioning outputs and next actions.'}</p>
+            <FlowPanel title="Operational Output" icon="output" accent={tokens.tealText} eyebrow="OUTPUT">
+              <p style={{ fontSize: '13px', color: tokens.muted, lineHeight: 1.65, marginBottom: '16px' }}>{useCase.output?.summary || 'Decisioning outputs and next actions.'}</p>
               <div style={{ display: 'grid', gap: '12px' }}>
                 {[
-                  { label: 'Delivery', value: useCase.output?.delivery, icon: 'delivery', accent: '#4B6BFB' },
-                  { label: 'Action', value: useCase.output?.action, icon: 'action', accent: '#F97316' },
+                  { label: 'Delivery', value: useCase.output?.delivery, icon: 'delivery', accent: tokens.tealText },
+                  { label: 'Action', value: useCase.output?.action, icon: 'action', accent: tokens.pink },
                 ].map(item => (
-                  <div key={item.label} style={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.06)', background: '#F8FAFC', padding: '14px', display: 'grid', gridTemplateColumns: '40px 1fr', gap: '12px' }}>
+                  <div key={item.label} style={{ borderRadius: '16px', border: `1px solid ${tokens.border}`, background: tokens.surface2, padding: '14px', display: 'grid', gridTemplateColumns: '40px 1fr', gap: '12px' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${item.accent}12`, color: item.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Icon name={item.icon} size={18} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '10px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '4px' }}>{item.label.toUpperCase()}</div>
-                      <div style={{ fontSize: '12px', color: '#1A1A2E', lineHeight: 1.55 }}>{item.value || '—'}</div>
+                      <div style={{ fontSize: '10px', color: tokens.dim, fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em', marginBottom: '4px' }}>{item.label.toUpperCase()}</div>
+                      <div style={{ fontSize: '12px', color: tokens.text, lineHeight: 1.55 }}>{item.value || '—'}</div>
                     </div>
                   </div>
                 ))}
                 {useCase.output?.result && (
-                  <div style={{ borderRadius: '18px', padding: '16px', background: 'rgba(10,138,92,0.06)', border: '1px solid rgba(10,138,92,0.16)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#0A8A5C', marginBottom: '8px' }}>
+                  <div style={{ borderRadius: '18px', padding: '16px', background: 'rgba(38,234,159,0.12)', border: '1px solid rgba(38,234,159,0.28)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: tokens.tealText, marginBottom: '8px' }}>
                       <Icon name="results" size={16} />
                       <div style={{ fontSize: '10px', fontFamily: 'Jost, sans-serif', fontWeight: 700, letterSpacing: '0.08em' }}>PROVEN RESULTS</div>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#1A1A2E', lineHeight: 1.6 }}>{useCase.output.result}</div>
+                    <div style={{ fontSize: '12px', color: tokens.text, lineHeight: 1.6 }}>{useCase.output.result}</div>
                   </div>
                 )}
               </div>
@@ -238,27 +239,27 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
 
       {relatedResolved.length > 0 && (
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 clamp(20px, 4vw, 48px) 120px' }}>
-          <div style={{ borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '40px' }}>
-            <h3 style={{ fontFamily: 'Jost, sans-serif', fontSize: '18px', fontWeight: 700, color: '#1A1A2E', marginBottom: '6px' }}>
+          <div style={{ borderTop: `1px solid ${tokens.border}`, paddingTop: '40px' }}>
+            <h3 style={{ fontFamily: 'Jost, sans-serif', fontSize: '18px', fontWeight: 700, color: tokens.text, marginBottom: '6px' }}>
               You should also look at
             </h3>
-            <p style={{ color: '#6B7280', fontSize: '13px', marginBottom: '24px' }}>
+            <p style={{ color: tokens.muted, fontSize: '13px', marginBottom: '24px' }}>
               Related use cases that complement or extend this solution
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
               {relatedResolved.map((r, i) => {
                 const isClickable = r.hasDemo && onSelectUseCase
-                const relatedAccent = r.accent || '#6B7280'
+                const relatedAccent = r.accent || tokens.pink
                 return (
                   <div key={i}
                     onClick={() => isClickable && onSelectUseCase(r, r.vcObj)}
                     style={{
-                      background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '18px',
+                      background: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: '18px',
                       padding: '20px', cursor: isClickable ? 'pointer' : 'default',
-                      transition: 'all 200ms', boxShadow: '0 6px 18px rgba(15,23,42,0.04)',
+                      transition: 'all 200ms', boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
                     }}
-                    onMouseEnter={e => { if (isClickable) { e.currentTarget.style.borderColor = `${relatedAccent}44`; e.currentTarget.style.boxShadow = `0 14px 28px ${relatedAccent}16` } }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)'; e.currentTarget.style.boxShadow = '0 6px 18px rgba(15,23,42,0.04)' }}
+                    onMouseEnter={e => { if (isClickable) { e.currentTarget.style.borderColor = `${relatedAccent}44`; e.currentTarget.style.boxShadow = `0 4px 12px ${relatedAccent}14` } }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = tokens.border; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)' }}
                   >
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                       <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: `${relatedAccent}12`, color: relatedAccent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -266,11 +267,11 @@ const UseCasePage = ({ useCase, industry, valueChain, onBack, onSelectUseCase, c
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '11px', color: '#9CA3AF', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>{r.industry}</span>
+                          <span style={{ fontSize: '11px', color: tokens.dim, fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>{r.industry}</span>
                           {r.hasDemo && <Badge variant="pink">Live Demo</Badge>}
                         </div>
-                        <div style={{ fontFamily: 'Jost, sans-serif', fontSize: '14px', fontWeight: 700, color: '#1A1A2E', marginBottom: '8px' }}>{r.title}</div>
-                        <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.5 }}>{r.reason}</div>
+                        <div style={{ fontFamily: 'Jost, sans-serif', fontSize: '14px', fontWeight: 700, color: tokens.text, marginBottom: '8px' }}>{r.title}</div>
+                        <div style={{ fontSize: '12px', color: tokens.muted, lineHeight: 1.5 }}>{r.reason}</div>
                       </div>
                     </div>
                   </div>

@@ -1,4 +1,5 @@
 import { ICONS } from '../components/icons'
+import { tokens } from '../styles/tokens'
 
 const normalize = (value = '') =>
   String(value)
@@ -115,47 +116,20 @@ export const resolveIconKey = ({ entityType, iconKey, id, label }) => {
 }
 
 export const getEntityAccent = (entityType, resolvedIconKey) => {
-  const accentMap = {
-    retail: '#E82AAE',
-    fmcg: '#FF8A3D',
-    hospitality: '#0F9D7A',
-    banking: '#4B6BFB',
-    transport: '#1098D1',
-    buying: '#E82AAE',
-    pricing: '#F97316',
-    supply: '#0F9D7A',
-    operations: '#7C3AED',
-    marketing: '#D9485F',
-    production: '#FF8A3D',
-    logistics: '#1098D1',
-    revenue: '#E82AAE',
-    guest: '#0F9D7A',
-    workforce: '#4B6BFB',
-    risk: '#DC2626',
-    acquisition: '#4B6BFB',
-    retention: '#D9485F',
-    dispatch: '#1098D1',
-    energy: '#F59E0B',
-    fraud: '#DC2626',
-    forecast: '#4B6BFB',
-    input: '#4B6BFB',
-    model: '#7C3AED',
-    output: '#0F9D7A',
-    alert: '#F97316',
-    results: '#0F9D7A',
-    delivery: '#4B6BFB',
-    action: '#F97316',
-    data: '#7C3AED',
-    weather: '#1098D1',
-    building: '#6B7280',
-    occupancy: '#E82AAE',
-    meter: '#F59E0B',
-    history: '#7C3AED',
-    genericIndustry: entityType === 'industry' ? '#E82AAE' : '#6B7280',
-    genericValueChain: '#6B7280',
-    genericUseCase: '#6B7280',
-    genericSource: '#6B7280',
+  const tealKeys = new Set([
+    'hospitality',
+    'supply',
+    'guest',
+    'output',
+    'results',
+    'weather',
+    'meter',
+    'delivery',
+  ])
+
+  if (['genericIndustry', 'genericValueChain', 'genericUseCase', 'genericSource'].includes(resolvedIconKey)) {
+    return entityType === 'source' ? tokens.tealText : tokens.pink
   }
 
-  return accentMap[resolvedIconKey] || '#6B7280'
+  return tealKeys.has(resolvedIconKey) ? tokens.tealText : tokens.pink
 }
