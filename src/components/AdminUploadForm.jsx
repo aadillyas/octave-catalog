@@ -9,9 +9,6 @@ const parseKB = (kbText) => {
   try {
     const kb = JSON.parse(kbText)
     const ov = kb['USE CASE OVERVIEW'] || kb.overview || {}
-    const c1 = kb['COMPONENT 1 — DATA'] || kb.input || {}
-    const c2 = kb['COMPONENT 2 — MODEL'] || kb.model || {}
-    const c3 = kb['COMPONENT 3 — OUTPUT'] || kb.output || {}
     const c4 = kb['COMPONENT 4 — VALUE CAPTURE'] || kb.value || {}
     const fs = kb['FEASIBILITY SNAPSHOT'] || kb.feasibility || {}
 
@@ -28,26 +25,26 @@ const parseKB = (kbText) => {
   }
 }
 
-const AdminUploadForm = ({ onSuccess, preloadedFile }) => {
-  const [step, setStep] = useState(1) // 1 = paste KB, 2 = fill form
+const AdminUploadForm = ({ onSuccess }) => {
+  const [showKB, setShowKB] = useState(false)
   const [kbText, setKbText] = useState('')
   const [kbError, setKbError] = useState('')
-  const [form, setForm] = useState({ title: '', industry: '', valueChain: '', tagline: '', complexity: 'Medium', roi: '', deployTime: '', status: 'draft' })
-  const [file, setFile] = useState(preloadedFile || null)
+  const [form, setForm] = useState({ title: '', industry: '', valueChain: '', tagline: '', complexity: 'Medium', roi: '', deployTime: '' })
+  const [file, setFile] = useState(null)
   const [dragOver, setDragOver] = useState(false)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => { if (preloadedFile) { setFile(preloadedFile); setStep(2) } }, [preloadedFile])
-
   const set = (k, v) => { setForm(p => ({ ...p, [k]: v })); setErrors(p => ({ ...p, [k]: null })) }
 
   const handleKBParse = () => {
-    if (!kbText.trim()) { setStep(2); return }
+    if (!kbText.trim()) { setKbError('Paste JSON first'); return }
     const parsed = parseKB(kbText)
-    if (!parsed) { setKbError('Could not parse KB JSON — check the format or skip to fill manually.'); return }
+    if (!parsed) { setKbError('Could not parse KB JSON format.'); return }
     setForm(p => ({ ...p, ...parsed }))
-    setStep(2)
+    setShowKB(false)
+    setKbText('')
+    setKbError('')
   }
 
   const validate = () => {
@@ -81,8 +78,8 @@ const AdminUploadForm = ({ onSuccess, preloadedFile }) => {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Upload failed')
       onSuccess(data.message)
-      setForm({ title: '', industry: '', valueChain: '', tagline: '', complexity: 'Medium', roi: '', deployTime: '', status: 'draft' })
-      setFile(null); setStep(1); setKbText('')
+      setForm({ title: '', industry: '', valueChain: '', tagline: '', complexity: 'Medium', roi: '', deployTime: '' })
+      setFile(null)
     } catch (err) {
       setErrors({ submit: err.message })
     } finally { setLoading(false) }
@@ -110,95 +107,74 @@ const AdminUploadForm = ({ onSuccess, preloadedFile }) => {
 
   return (
     <div>
-      <h3 style={{ fontFamily: 'Jost, sans-serif', fontSize: '16px', fontWeight: 700, marginBottom: '4px', color: '#1A1A2E' }}>Upload Use Case</h3>
-      <p style={{ fontSize: '12px', color: '#6B7280', marginBottom: '20px' }}>
-        Run your KB → Feedback → Demo skills first, then upload here.
-      </p>
-
-      {/* Step indicators */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-        {[{ n: 1, label: 'Paste KB' }, { n: 2, label: 'Details & Upload' }].map(s => (
-          <div key={s.n} onClick={() => step > s.n && setStep(s.n)}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: step > s.n ? 'pointer' : 'default', opacity: step === s.n ? 1 : 0.4 }}>
-            <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: step === s.n ? '#E82AAE' : step > s.n ? '#0A8A5C' : '#D1D5DB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#fff', fontWeight: 700 }}>
-              {step > s.n ? '✓' : s.n}
-            </div>
-            <span style={{ fontSize: '12px', fontFamily: 'Jost, sans-serif', fontWeight: 600, color: '#1A1A2E' }}>{s.label}</span>
-            {s.n < 2 && <span style={{ color: '#9CA3AF', fontSize: '12px' }}>→</span>}
-          </div>
-        ))}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+        <div>
+          <h3 style={{ fontFamily: 'Jost, sans-serif', fontSize: '18px', fontWeight: 700, marginBottom: '4px', color: '#1A1A2E' }}>Publish New Use Case</h3>
+          <p style={{ fontSize: '12px', color: '#6B7280' }}>Fill details and upload demo.html to publish live.</p>
+        </div>
+        <button onClick={() => setShowKB(!showKB)} style={{ background: 'none', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '6px', padding: '6px 12px', fontSize: '11px', color: '#6B7280', cursor: 'pointer', fontWeight: 600 }}>
+          {showKB ? '✕ Close JSON' : '⚡ Import from KB JSON'}
+        </button>
       </div>
 
-      {step === 1 && (
-        <div>
-          <label style={lbl}>PASTE YOUR CONFIRMED KB JSON (OPTIONAL)</label>
-          <p style={{ fontSize: '11px', color: '#9CA3AF', marginBottom: '8px' }}>
-            Copy the final KB output from your skill workflow. Claude will auto-fill the form fields below.
-          </p>
+      {showKB && (
+        <div style={{ background: '#F7F8FA', borderRadius: '10px', padding: '16px', marginBottom: '24px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <label style={lbl}>PASTE KB JSON</label>
           <textarea value={kbText} onChange={e => { setKbText(e.target.value); setKbError('') }}
-            placeholder={'{\n  "USE CASE OVERVIEW": { "Use Case Name": "...", ... },\n  ...\n}'}
-            style={{ ...inp(kbError), height: '160px', resize: 'vertical', fontFamily: 'monospace', fontSize: '12px' }} />
-          {kbError && <div style={{ fontSize: '11px', color: '#E82AAE', marginTop: '4px' }}>{kbError}</div>}
-          <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-            <button onClick={handleKBParse} style={{ flex: 1, background: '#E82AAE', border: 'none', borderRadius: '8px', padding: '10px', color: '#fff', fontSize: '13px', fontFamily: 'Jost, sans-serif', fontWeight: 700, cursor: 'pointer' }}>
-              {kbText.trim() ? 'Parse & Continue →' : 'Skip — Fill Manually →'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {step === 2 && (
-        <div>
-          {field('Use Case Title', 'title', 'text', { placeholder: 'e.g. Energy Optimisation' })}
-          {field('Industry', 'industry', 'select', { options: INDUSTRIES })}
-          {field('Value Chain', 'valueChain', 'select', { options: getValueChains(form.industry) })}
-          {field('Tagline', 'tagline', 'text', { placeholder: '1–2 sentence description' })}
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
-            <div>
-              <label style={lbl}>COMPLEXITY</label>
-              <select value={form.complexity} onChange={e => set('complexity', e.target.value)} style={{ ...inp(false), cursor: 'pointer' }}>
-                {['Low','Medium','High'].map(o => <option key={o}>{o}</option>)}
-              </select>
-            </div>
-            <div>
-              <label style={lbl}>STATUS</label>
-              <select value={form.status} onChange={e => set('status', e.target.value)} style={{ ...inp(false), cursor: 'pointer' }}>
-                <option value="draft">Draft</option>
-                <option value="approved">Approved</option>
-              </select>
-            </div>
-          </div>
-
-          {field('ROI Headline', 'roi', 'text', { placeholder: 'e.g. 10% reduction in energy consumption' })}
-          {field('Deploy Time', 'deployTime', 'text', { placeholder: 'e.g. 8–12 weeks' })}
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={lbl}>DEMO FILE (.html)</label>
-            <div onDragOver={e => { e.preventDefault(); setDragOver(true) }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
-              onClick={() => document.getElementById('file-input').click()}
-              style={{ border: `2px dashed ${errors.file ? '#E82AAE' : dragOver ? '#E82AAE' : 'rgba(0,0,0,0.15)'}`, borderRadius: '10px', padding: '28px', textAlign: 'center', cursor: 'pointer', background: dragOver ? 'rgba(232,42,174,0.03)' : '#F7F8FA', transition: 'all 200ms' }}>
-              {file
-                ? <div>
-                    <div style={{ color: '#0A8A5C', fontSize: '13px', marginBottom: '2px' }}>✓ {file.name}</div>
-                    <div style={{ color: '#9CA3AF', fontSize: '11px' }}>{(file.size/1024).toFixed(0)} KB{preloadedFile && file === preloadedFile ? ' — from Demo Transformer' : ''}</div>
-                  </div>
-                : <div><div style={{ color: '#6B7280', fontSize: '13px', marginBottom: '2px' }}>Drop demo.html here</div><div style={{ color: '#9CA3AF', fontSize: '11px' }}>or click to browse</div></div>
-              }
-            </div>
-            <input id="file-input" type="file" accept=".html" style={{ display: 'none' }} onChange={e => { if (e.target.files[0]) setFile(e.target.files[0]) }} />
-            {errors.file && <div style={{ fontSize: '11px', color: '#E82AAE', marginTop: '4px' }}>{errors.file}</div>}
-          </div>
-
-          {errors.submit && (
-            <div style={{ background: 'rgba(232,42,174,0.06)', border: '1px solid rgba(232,42,174,0.2)', borderRadius: '8px', padding: '12px', fontSize: '13px', color: '#E82AAE', marginBottom: '12px' }}>{errors.submit}</div>
-          )}
-
-          <button onClick={handleSubmit} disabled={loading} style={{ width: '100%', background: loading ? '#D1D5DB' : '#E82AAE', border: 'none', borderRadius: '10px', padding: '13px', color: '#fff', fontSize: '14px', fontFamily: 'Jost, sans-serif', fontWeight: 700, cursor: loading ? 'default' : 'pointer' }}>
-            {loading ? 'Uploading…' : 'Upload to Draft Branch →'}
+            placeholder={'Paste the final KB output here...'}
+            style={{ ...inp(kbError), height: '100px', resize: 'vertical', fontFamily: 'monospace', fontSize: '11px', marginBottom: '10px' }} />
+          {kbError && <div style={{ fontSize: '11px', color: '#E82AAE', marginBottom: '10px' }}>{kbError}</div>}
+          <button onClick={handleKBParse} style={{ width: '100%', background: '#1A1A2E', border: 'none', borderRadius: '6px', padding: '8px', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+            Auto-fill Fields
           </button>
         </div>
       )}
+
+      {field('Use Case Title', 'title', 'text', { placeholder: 'e.g. Energy Optimisation' })}
+      
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        {field('Industry', 'industry', 'select', { options: INDUSTRIES })}
+        {field('Value Chain', 'valueChain', 'select', { options: getValueChains(form.industry) })}
+      </div>
+
+      {field('Tagline', 'tagline', 'text', { placeholder: '1–2 sentence description' })}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div>
+          <label style={lbl}>COMPLEXITY</label>
+          <select value={form.complexity} onChange={e => set('complexity', e.target.value)} style={{ ...inp(false), cursor: 'pointer' }}>
+            {['Low','Medium','High'].map(o => <option key={o}>{o}</option>)}
+          </select>
+        </div>
+        {field('Deploy Time', 'deployTime', 'text', { placeholder: 'e.g. 8–12 weeks' })}
+      </div>
+
+      {field('ROI Headline', 'roi', 'text', { placeholder: 'e.g. 10% reduction in energy consumption' })}
+
+      <div style={{ marginBottom: '24px', marginTop: '10px' }}>
+        <label style={lbl}>DEMO FILE (.html)</label>
+        <div onDragOver={e => { e.preventDefault(); setDragOver(true) }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
+          onClick={() => document.getElementById('file-input').click()}
+          style={{ border: `2px dashed ${errors.file ? '#E82AAE' : dragOver ? '#E82AAE' : 'rgba(0,0,0,0.15)'}`, borderRadius: '10px', padding: '32px', textAlign: 'center', cursor: 'pointer', background: dragOver ? 'rgba(232,42,174,0.03)' : '#F7F8FA', transition: 'all 200ms' }}>
+          {file
+            ? <div>
+                <div style={{ color: '#0A8A5C', fontSize: '13px', marginBottom: '2px', fontWeight: 600 }}>✓ {file.name}</div>
+                <div style={{ color: '#9CA3AF', fontSize: '11px' }}>{(file.size/1024).toFixed(0)} KB</div>
+              </div>
+            : <div><div style={{ color: '#6B7280', fontSize: '14px', marginBottom: '4px', fontWeight: 500 }}>Drop demo.html here</div><div style={{ color: '#9CA3AF', fontSize: '12px' }}>or click to browse</div></div>
+          }
+        </div>
+        <input id="file-input" type="file" accept=".html" style={{ display: 'none' }} onChange={e => { if (e.target.files[0]) setFile(e.target.files[0]) }} />
+        {errors.file && <div style={{ fontSize: '11px', color: '#E82AAE', marginTop: '6px' }}>{errors.file}</div>}
+      </div>
+
+      {errors.submit && (
+        <div style={{ background: 'rgba(232,42,174,0.06)', border: '1px solid rgba(232,42,174,0.2)', borderRadius: '8px', padding: '12px', fontSize: '13px', color: '#E82AAE', marginBottom: '16px' }}>{errors.submit}</div>
+      )}
+
+      <button onClick={handleSubmit} disabled={loading} style={{ width: '100%', background: loading ? '#D1D5DB' : '#E82AAE', border: 'none', borderRadius: '10px', padding: '14px', color: '#fff', fontSize: '15px', fontFamily: 'Jost, sans-serif', fontWeight: 700, cursor: loading ? 'default' : 'pointer', boxShadow: '0 4px 12px rgba(232,42,174,0.2)' }}>
+        {loading ? 'Publishing Live…' : 'Publish Live to Catalog →'}
+      </button>
     </div>
   )
 }
