@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factory Production Planning — Octave Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&family=Lato:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#F4F4F0;
+  --surface:#FFFFFF;
+  --surface2:#F0EFEB;
+  --border:rgba(0,0,0,0.08);
+  --border-active:rgba(0,0,0,0.15);
+  --pink:#E82AAE;
+  --teal:#26EA9F;
+  --teal-text:#0A8A5C;
+  --text:#1A1A1A;
+  --muted:#666666;
+  --dim:#C0BFBB;
+  --navy:#002B3D;
+  --shadow:0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md:0 4px 16px rgba(0,0,0,0.1);
+}
+
+body{font-family:'Lato',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden}
+h1,h2,h3,h4{font-family:'Jost',sans-serif}
+
+/* ── PROGRESS BAR ── */
+#progress{display:flex;width:100%;height:48px;border-bottom:1px solid var(--border);background:var(--surface);position:fixed;top:0;left:0;z-index:100}
+.seg{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;font-family:'Jost',sans-serif;font-size:11.5px;font-weight:600;letter-spacing:0.04em;color:var(--dim);border-right:1px solid var(--border);transition:background 0.2s,color 0.2s;text-transform:uppercase;padding:0 8px;text-align:center}
+.seg:last-child{border-right:none}
+.seg.done{color:var(--teal-text)}
+.seg.done .tick{display:inline-flex}
+.seg.active{background:var(--pink);color:#fff}
+.seg.active .tick{display:none}
+.tick{display:none;width:16px;height:16px;background:var(--teal);border-radius:50%;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+
+/* ── VIEWPORT ── */
+#stage{position:fixed;top:48px;left:0;right:0;bottom:52px;overflow-y:auto;overflow-x:hidden}
+
+/* ── NAV ── */
+#nav{position:fixed;bottom:0;left:0;right:0;height:52px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;z-index:100}
+.nav-btn{font-family:'Jost',sans-serif;font-weight:700;font-size:13px;padding:9px 22px;border-radius:6px;border:none;cursor:pointer;letter-spacing:0.03em;transition:all 0.2s}
+.btn-next{background:var(--pink);color:#fff}
+.btn-next:hover{background:#c91a97;transform:translateY(-1px)}
+.btn-back{background:transparent;color:var(--muted);border:1.5px solid var(--border)}
+.btn-back:hover{border-color:var(--border-active);color:var(--text)}
+.btn-back:disabled{opacity:0.3;cursor:not-allowed}
+.nav-act{font-family:'Jost',sans-serif;font-size:12px;font-weight:600;color:var(--dim);letter-spacing:0.06em;text-transform:uppercase}
+
+/* ── ACT WRAPPER ── */
+.act{display:none;min-height:100%;padding:40px 60px 40px;opacity:0;transform:translateY(16px);transition:opacity 0.4s cubic-bezier(0.16,1,0.3,1),transform 0.4s cubic-bezier(0.16,1,0.3,1)}
+.act.active{display:block}
+.act.visible{opacity:1;transform:translateY(0)}
+
+.act-eyebrow{font-family:'Jost',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--pink);margin-bottom:10px}
+.act-title{font-family:'Jost',sans-serif;font-size:32px;font-weight:800;color:var(--navy);margin-bottom:8px;line-height:1.15}
+.act-subtitle{font-size:15px;color:var(--muted);line-height:1.6;max-width:640px;margin-bottom:32px}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;box-shadow:var(--shadow)}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);transition:all 0.2s}
+
+/* ── ACT 1 — THE PROBLEM ── */
+.problem-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pain-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 22px;border-left:4px solid #E53935}
+.pain-card h4{font-family:'Jost',sans-serif;font-size:13px;font-weight:700;color:#C62828;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em}
+.pain-card p{font-size:13.5px;color:var(--text);line-height:1.6}
+.pain-card .pain-num{font-family:'Jost',sans-serif;font-size:36px;font-weight:800;color:#E53935;line-height:1;margin-bottom:4px}
+.manual-flow{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px}
+.manual-flow h3{font-family:'Jost',sans-serif;font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:16px}
+.flow-steps{display:flex;align-items:center;gap:0;flex-wrap:nowrap;overflow-x:auto}
+.flow-step{background:var(--surface);border:1.5px solid #f0c0c0;border-radius:8px;padding:12px 14px;text-align:center;min-width:120px;flex-shrink:0}
+.flow-step .fs-icon{font-size:20px;margin-bottom:4px}
+.flow-step .fs-label{font-size:11.5px;font-weight:700;color:#C62828;font-family:'Jost',sans-serif;margin-bottom:2px}
+.flow-step .fs-time{font-size:10.5px;color:var(--muted)}
+.flow-arrow{font-size:18px;color:var(--dim);margin:0 6px;flex-shrink:0}
+.cost-strip{display:flex;gap:14px;margin-top:20px}
+.cost-tile{flex:1;background:#FFF5F5;border:1.5px solid #FFCCCC;border-radius:8px;padding:14px 16px;text-align:center}
+.cost-tile .ct-val{font-family:'Jost',sans-serif;font-size:26px;font-weight:800;color:#E53935}
+.cost-tile .ct-lbl{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* ── ACT 2 — SOLUTION OVERVIEW ── */
+.pipeline-wrap{position:relative;display:flex;align-items:center;justify-content:center;gap:0;padding:16px 0 32px}
+.pipe-node{opacity:0;transform:translateY(10px);transition:opacity 0.4s,transform 0.4s}
+.pipe-node.visible{opacity:1;transform:translateY(0)}
+.pipe-box{background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:18px 16px;text-align:center;width:148px;position:relative;box-shadow:var(--shadow)}
+.pipe-box.active-pipe{border-color:var(--pink);box-shadow:0 0 0 3px rgba(232,42,174,0.12)}
+.pipe-box.done-pipe{border-color:var(--teal)}
+.pipe-icon{font-size:26px;margin-bottom:8px}
+.pipe-num{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--pink);color:#fff;font-family:'Jost',sans-serif;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:0.06em}
+.pipe-title{font-family:'Jost',sans-serif;font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:5px}
+.pipe-desc{font-size:11px;color:var(--muted);line-height:1.45}
+.pipe-arrow-svg{flex-shrink:0;margin:0 -2px}
+.replace-banner{background:linear-gradient(135deg,#002B3D 0%,#004D6B 100%);border-radius:10px;padding:20px 28px;display:flex;align-items:center;gap:24px;margin-top:4px}
+.rb-before{flex:1;padding:14px 16px;background:rgba(255,255,255,0.08);border-radius:8px;border:1px solid rgba(255,255,255,0.12)}
+.rb-after{flex:1;padding:14px 16px;background:rgba(38,234,159,0.12);border-radius:8px;border:1px solid rgba(38,234,159,0.3)}
+.rb-label{font-family:'Jost',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px}
+.rb-before .rb-label{color:rgba(255,255,255,0.4)}
+.rb-after .rb-label{color:var(--teal)}
+.rb-before p,.rb-after p{font-size:12.5px;color:rgba(255,255,255,0.85);line-height:1.55}
+.rb-arrow{font-size:28px;color:var(--teal);flex-shrink:0}
+
+/* ── ACT 3 — DATA ── */
+.data-canvas{display:flex;align-items:flex-start;gap:24px;min-height:320px}
+.data-sources{display:flex;flex-direction:column;gap:8px;width:200px;flex-shrink:0}
+.ds-node{opacity:0;transform:translateX(-12px);transition:opacity 0.35s,transform 0.35s;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:8px}
+.ds-node.visible{opacity:1;transform:translateX(0)}
+.ds-icon{font-size:16px;flex-shrink:0}
+.ds-info .ds-name{font-family:'Jost',sans-serif;font-size:11px;font-weight:700;color:var(--navy)}
+.ds-info .ds-freq{font-size:10px;color:var(--muted)}
+.data-pipeline-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;min-height:320px}
+.dp-central{background:var(--navy);color:#fff;border-radius:12px;padding:16px 22px;text-align:center;width:160px}
+.dp-central .dc-title{font-family:'Jost',sans-serif;font-size:13px;font-weight:700;margin-bottom:4px}
+.dp-central .dc-sub{font-size:10.5px;color:rgba(255,255,255,0.55)}
+.dp-output{background:var(--surface);border:2.5px solid var(--teal);border-radius:12px;padding:16px 22px;text-align:center;width:160px;opacity:0;transition:opacity 0.5s 1s}
+.dp-output.visible{opacity:1}
+.dp-output .dc-title{font-family:'Jost',sans-serif;font-size:13px;font-weight:700;color:var(--teal-text);margin-bottom:4px}
+.dp-output .dc-sub{font-size:10.5px;color:var(--muted)}
+.svg-lines{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+
+/* ── ACT 4 — MODEL ── */
+.model-layout{display:grid;grid-template-columns:1fr 340px;gap:24px}
+.model-pipeline{display:flex;flex-direction:column;gap:12px}
+.model-stage{background:var(--surface);border:2px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px;transition:border-color 0.3s,box-shadow 0.3s}
+.model-stage.running{border-color:var(--pink);box-shadow:0 0 0 3px rgba(232,42,174,0.1)}
+.model-stage.complete{border-color:var(--teal)}
+.ms-num{width:28px;height:28px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-family:'Jost',sans-serif;font-size:12px;font-weight:800;color:var(--dim);flex-shrink:0;transition:background 0.3s,color 0.3s}
+.model-stage.running .ms-num{background:var(--pink);color:#fff}
+.model-stage.complete .ms-num{background:var(--teal);color:#fff}
+.ms-body .ms-title{font-family:'Jost',sans-serif;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.ms-body .ms-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.ms-body .ms-value{font-family:'Jost',sans-serif;font-size:11px;font-weight:700;color:var(--teal-text);margin-top:5px;opacity:0;transition:opacity 0.4s}
+.model-stage.complete .ms-value{opacity:1}
+.model-sidebar{display:flex;flex-direction:column;gap:14px}
+.scenario-card{background:var(--navy);color:#fff;border-radius:10px;padding:18px 20px}
+.sc-label{font-family:'Jost',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.4);margin-bottom:8px}
+.sc-title{font-family:'Jost',sans-serif;font-size:16px;font-weight:800;margin-bottom:12px;color:#fff}
+.sc-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:12px}
+.sc-row:last-child{border-bottom:none}
+.sc-row span:first-child{color:rgba(255,255,255,0.55)}
+.sc-row span:last-child{font-weight:700;color:#fff}
+.replay-btn{font-family:'Jost',sans-serif;font-size:12px;font-weight:700;padding:9px 16px;border:1.5px solid var(--border);border-radius:6px;background:transparent;cursor:pointer;color:var(--muted);width:100%;transition:all 0.2s}
+.replay-btn:hover{border-color:var(--pink);color:var(--pink)}
+
+/* ── ACT 5 — OUTPUT ── */
+.output-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px}
+.otab{font-family:'Jost',sans-serif;font-size:12px;font-weight:700;padding:10px 22px;border:none;background:transparent;cursor:pointer;color:var(--dim);border-bottom:2px solid transparent;margin-bottom:-2px;letter-spacing:0.04em;text-transform:uppercase;transition:all 0.2s}
+.otab.active{color:var(--pink);border-bottom-color:var(--pink)}
+.otab-content{display:none}
+.otab-content.active{display:block}
+
+/* dashboard */
+.dash-kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;text-align:center;box-shadow:var(--shadow)}
+.kpi-val{font-family:'Jost',sans-serif;font-size:28px;font-weight:800;color:var(--navy);line-height:1}
+.kpi-val.good{color:var(--teal-text)}
+.kpi-val.great{color:var(--pink)}
+.kpi-label{font-size:11px;color:var(--muted);margin-top:4px}
+.schedule-table{width:100%;border-collapse:collapse;font-size:12px}
+.schedule-table th{background:var(--surface2);font-family:'Jost',sans-serif;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);padding:8px 12px;text-align:left;border-bottom:1.5px solid var(--border)}
+.schedule-table td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.schedule-table tr:last-child td{border-bottom:none}
+.schedule-table tr:hover td{background:var(--surface2)}
+.sku-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700;font-family:'Jost',sans-serif}
+.pill-g{background:#E8F5E9;color:#2E7D32}
+.pill-b{background:#E3F2FD;color:#1565C0}
+.pill-o{background:#FFF3E0;color:#E65100}
+.status-ok{color:var(--teal-text);font-weight:700}
+.fullscreen-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-family:'Jost',sans-serif;font-size:11px;font-weight:700;cursor:pointer;color:var(--muted);transition:all 0.2s;float:right;margin-bottom:10px}
+.fullscreen-btn:hover{border-color:var(--pink);color:var(--pink)}
+
+/* before/after toggle */
+.ba-toggle{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.ba-btn{font-family:'Jost',sans-serif;font-size:12px;font-weight:700;padding:8px 20px;border-radius:20px;border:1.5px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);transition:all 0.2s}
+.ba-btn.active{background:var(--pink);color:#fff;border-color:var(--pink)}
+.ba-panel{display:none;animation:fadeIn 0.3s ease}
+.ba-panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.before-state{background:#FFF5F5;border:1.5px solid #FFCCCC;border-radius:10px;padding:20px 24px}
+.after-state{background:#F0FBF7;border:1.5px solid #A5D6C0;border-radius:10px;padding:20px 24px}
+.ba-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+.ba-item .bi-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:3px}
+.ba-item .bi-val{font-family:'Jost',sans-serif;font-size:18px;font-weight:800;color:var(--navy)}
+.ba-item .bi-val.red{color:#E53935}
+.ba-item .bi-val.green{color:var(--teal-text)}
+.ba-aside{background:var(--surface2);border-radius:8px;padding:14px 16px;margin-top:14px;font-size:12.5px;color:var(--muted);line-height:1.6;font-style:italic}
+
+/* fullscreen overlay */
+#fs-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:40px 60px}
+#fs-overlay.visible{display:block}
+.fs-close{position:fixed;top:20px;right:28px;font-family:'Jost',sans-serif;font-size:12px;font-weight:700;padding:9px 18px;background:var(--pink);color:#fff;border:none;border-radius:6px;cursor:pointer;z-index:201}
+
+/* ── ACT 6 — VALUE ── */
+.value-hero{text-align:center;padding:24px 0 32px}
+.vh-num{font-family:'Jost',sans-serif;font-size:88px;font-weight:800;color:var(--pink);line-height:1;letter-spacing:-0.03em}
+.vh-unit{font-family:'Jost',sans-serif;font-size:22px;font-weight:500;color:var(--muted);margin-top:4px}
+.vh-sub{font-size:14px;color:var(--muted);margin-top:10px;font-style:italic}
+.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;text-align:center;box-shadow:var(--shadow)}
+.mc-val{font-family:'Jost',sans-serif;font-size:38px;font-weight:800;color:var(--navy);line-height:1}
+.mc-label{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.4}
+.mc-val.pink{color:var(--pink)}
+.mc-val.teal{color:var(--teal-text)}
+.bar-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;box-shadow:var(--shadow)}
+.bar-section h3{font-family:'Jost',sans-serif;font-size:14px;font-weight:700;color:var(--navy);margin-bottom:16px}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.bar-row:last-child{margin-bottom:0}
+.br-label{font-size:12px;color:var(--muted);width:130px;flex-shrink:0;text-align:right}
+.br-track{flex:1;height:28px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.br-fill{height:100%;border-radius:4px;width:0;transition:width 1s cubic-bezier(0.16,1,0.3,1)}
+.br-fill.before{background:#FFCDD2}
+.br-fill.after{background:var(--teal)}
+.br-val{font-family:'Jost',sans-serif;font-size:12px;font-weight:700;color:var(--text);width:80px;flex-shrink:0}
+.octave-footer{text-align:center;margin-top:28px;font-size:11px;color:var(--dim)}
+.octave-footer span{font-family:'Jost',sans-serif;font-weight:800;color:var(--pink);letter-spacing:0.06em}
+.deployment-note{font-size:12px;color:var(--muted);font-style:italic;text-align:center;margin-top:12px}
+</style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div id="progress">
+  <div class="seg active" onclick="goTo(0)"><span class="tick">✓</span>The Problem</div>
+  <div class="seg" onclick="goTo(1)"><span class="tick">✓</span>Solution</div>
+  <div class="seg" onclick="goTo(2)"><span class="tick">✓</span>The Data</div>
+  <div class="seg" onclick="goTo(3)"><span class="tick">✓</span>The Model</div>
+  <div class="seg" onclick="goTo(4)"><span class="tick">✓</span>Output</div>
+  <div class="seg" onclick="goTo(5)"><span class="tick">✓</span>The Value</div>
+</div>
+
+<!-- STAGE -->
+<div id="stage">
+
+<!-- ══════════════════════════════════════════════
+     ACT 1 — THE PROBLEM
+══════════════════════════════════════════════ -->
+<div class="act active" id="act-0">
+  <div class="act-eyebrow">Act 1</div>
+  <div class="act-title">Every Friday. By Hand. For Hours.</div>
+  <div class="act-subtitle">Before this solution, the production planner built CCS's weekly factory schedule entirely manually — pulling from SAP, spreadsheets, and experience, while the real costs stayed invisible.</div>
+
+  <div class="manual-flow">
+    <h3>The Manual Friday Process</h3>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="fs-icon">📊</div>
+        <div class="fs-label">Pull SAP Stock</div>
+        <div class="fs-time">30 min</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="fs-icon">📦</div>
+        <div class="fs-label">Check RM Levels</div>
+        <div class="fs-time">20 min</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="fs-icon">📅</div>
+        <div class="fs-label">Review Demand Plan</div>
+        <div class="fs-time">20 min</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="fs-icon">🔧</div>
+        <div class="fs-label">Check Downtime</div>
+        <div class="fs-time">15 min</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="fs-icon">✏️</div>
+        <div class="fs-label">Build Plan</div>
+        <div class="fs-time">60 min</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="border-color:#ffb3b3">
+        <div class="fs-icon">🤞</div>
+        <div class="fs-label">Hope It Works</div>
+        <div class="fs-time" style="color:#E53935">No guarantee</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="problem-grid">
+    <div class="pain-card">
+      <h4>Out of Stock — Invisible Cost</h4>
+      <div class="pain-num">~2.7%</div>
+      <p>OOS-to-sales ratio in baseline months. Lost margin on every unserved order — never visible to the planner at plan time. The system had no mechanism to price the cost of getting it wrong.</p>
+    </div>
+    <div class="pain-card">
+      <h4>Working Capital — Tied Up Unnecessarily</h4>
+      <div class="pain-num">3 weeks+</div>
+      <p>Stock being held on short shelf-life SKUs with low seasonal demand. Planners kept lines running to avoid shift cost — without seeing the working capital accumulating in slow-moving inventory.</p>
+    </div>
+    <div class="pain-card">
+      <h4>16 Data Sources. Zero Integration.</h4>
+      <p>SAP stock, procurement batches, demand plans, downtime schedules, BOM data, shift agreements — all consulted separately, manually. No single source of optimised truth. Errors compound silently.</p>
+    </div>
+    <div class="pain-card">
+      <h4>No Constraint Enforcement</h4>
+      <p>Raw material lead times, union shift scenarios, minimum order quantities, warehouse capacity caps — all enforced by memory and convention, not by any systematic check. Violations discovered after the fact.</p>
+    </div>
+  </div>
+
+  <div class="cost-strip">
+    <div class="cost-tile">
+      <div class="ct-val">2–3 hrs</div>
+      <div class="ct-lbl">Every Friday, planning by hand</div>
+    </div>
+    <div class="cost-tile">
+      <div class="ct-val">16</div>
+      <div class="ct-lbl">Data sources consulted manually</div>
+    </div>
+    <div class="cost-tile">
+      <div class="ct-val">LKR 22M+</div>
+      <div class="ct-lbl">Annual OOS cost at baseline</div>
+    </div>
+    <div class="cost-tile">
+      <div class="ct-val">0</div>
+      <div class="ct-lbl">Optimisation variables considered</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ACT 2 — SOLUTION OVERVIEW
+══════════════════════════════════════════════ -->
+<div class="act" id="act-1">
+  <div class="act-eyebrow">Act 2</div>
+  <div class="act-title">A Four-Component Automated Pipeline</div>
+  <div class="act-subtitle">The solution replaces the manual Friday process with a fully automated system — ingesting 16 live data sources, running a MILP optimiser across all constraints, and delivering a sequenced, shift-level plan by 9am.</div>
+
+  <div class="pipeline-wrap" id="pipe-wrap">
+    <div class="pipe-node" id="pn0">
+      <div class="pipe-box" id="pb0">
+        <div class="pipe-num">C1</div>
+        <div class="pipe-icon">⚙️</div>
+        <div class="pipe-title">Data Transformation</div>
+        <div class="pipe-desc">16 live datasets → 19 structured model input tabs</div>
+      </div>
+    </div>
+
+    <svg class="pipe-arrow-svg" width="40" height="60" viewBox="0 0 40 60" id="pa0" style="opacity:0">
+      <line x1="0" y1="30" x2="32" y2="30" stroke="#C0BFBB" stroke-width="2" stroke-dasharray="4 3"/>
+      <polygon points="32,24 40,30 32,36" fill="#C0BFBB"/>
+    </svg>
+
+    <div class="pipe-node" id="pn1">
+      <div class="pipe-box" id="pb1">
+        <div class="pipe-num">C2</div>
+        <div class="pipe-icon">✅</div>
+        <div class="pipe-title">Pre-Processing</div>
+        <div class="pipe-desc">Validates all inputs; blocks pipeline if data is stale</div>
+      </div>
+    </div>
+
+    <svg class="pipe-arrow-svg" width="40" height="60" viewBox="0 0 40 60" id="pa1" style="opacity:0">
+      <line x1="0" y1="30" x2="32" y2="30" stroke="#C0BFBB" stroke-width="2" stroke-dasharray="4 3"/>
+      <polygon points="32,24 40,30 32,36" fill="#C0BFBB"/>
+    </svg>
+
+    <div class="pipe-node" id="pn2">
+      <div class="pipe-box" id="pb2">
+        <div class="pipe-num">C3</div>
+        <div class="pipe-icon">🧠</div>
+        <div class="pipe-title">Top Level Optimiser</div>
+        <div class="pipe-desc">MILP: which SKUs, what volume, which shifts — reward maximised</div>
+      </div>
+    </div>
+
+    <svg class="pipe-arrow-svg" width="40" height="60" viewBox="0 0 40 60" id="pa2" style="opacity:0">
+      <line x1="0" y1="30" x2="32" y2="30" stroke="#C0BFBB" stroke-width="2" stroke-dasharray="4 3"/>
+      <polygon points="32,24 40,30 32,36" fill="#C0BFBB"/>
+    </svg>
+
+    <div class="pipe-node" id="pn3">
+      <div class="pipe-box" id="pb3">
+        <div class="pipe-num">C4</div>
+        <div class="pipe-icon">📋</div>
+        <div class="pipe-title">Bottom Level Scheduler</div>
+        <div class="pipe-desc">Sequences SKUs within shifts; minimises changeover time</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="replace-banner">
+    <div class="rb-before">
+      <div class="rb-label">Before</div>
+      <p>Production planner spends 2–3 hours every Friday manually aggregating 16 data sources, building a schedule by hand with no systematic cost optimisation. OOS and working capital consequences invisible at plan time.</p>
+    </div>
+    <div class="rb-arrow">→</div>
+    <div class="rb-after">
+      <div class="rb-label">After</div>
+      <p>Two Databricks jobs run automatically at 8:30am and 8:40am every Friday. A sequenced, shift-level production plan lands in SharePoint by 9am — ready to execute, no editing required. Planner reviews exceptions only.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ACT 3 — THE DATA
+══════════════════════════════════════════════ -->
+<div class="act" id="act-2">
+  <div class="act-eyebrow">Act 3</div>
+  <div class="act-title">16 Sources. One Model-Ready Dataset.</div>
+  <div class="act-subtitle">Every Friday, the pipeline ingests and validates 16 live data sources — from SAP stock to BOM data — before a single optimisation variable is set.</div>
+
+  <div class="data-canvas">
+    <div class="data-sources" id="ds-list">
+      <div class="ds-node" id="ds0"><div class="ds-icon">📊</div><div class="ds-info"><div class="ds-name">Primary Sales</div><div class="ds-freq">Daily · Draw-out pattern</div></div></div>
+      <div class="ds-node" id="ds1"><div class="ds-icon">🏭</div><div class="ds-info"><div class="ds-name">Hourly Production</div><div class="ds-freq">Weekly · Line rate per SKU</div></div></div>
+      <div class="ds-node" id="ds2"><div class="ds-icon">📅</div><div class="ds-info"><div class="ds-name">Demand Plan</div><div class="ds-freq">Monthly · Volume targets</div></div></div>
+      <div class="ds-node" id="ds3"><div class="ds-icon">🍶</div><div class="ds-info"><div class="ds-name">Usable Bottles</div><div class="ds-freq">Weekly · RM batch availability</div></div></div>
+      <div class="ds-node" id="ds4"><div class="ds-icon">🧪</div><div class="ds-info"><div class="ds-name">Syrup Changes</div><div class="ds-freq">Monthly · Changeover matrix</div></div></div>
+      <div class="ds-node" id="ds5"><div class="ds-icon">📦</div><div class="ds-info"><div class="ds-name">Stock on Hand</div><div class="ds-freq">Daily · Opening stock</div></div></div>
+      <div class="ds-node" id="ds6"><div class="ds-icon">🔧</div><div class="ds-info"><div class="ds-name">Planned Downtime</div><div class="ds-freq">Weekly · Equipment availability</div></div></div>
+      <div class="ds-node" id="ds7"><div class="ds-icon">📋</div><div class="ds-info"><div class="ds-name">BOM Data</div><div class="ds-freq">Monthly · RM use per SKU</div></div></div>
+    </div>
+
+    <div style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+        <div class="dp-central">
+          <div class="dc-title">🔄 Data Pipeline</div>
+          <div class="dc-sub">Validation + transformation</div>
+        </div>
+        <div style="font-size:20px;color:var(--dim)">↓</div>
+        <div class="dp-output" id="dp-out">
+          <div class="dc-title">✓ Model-Ready Dataset</div>
+          <div class="dc-sub">19 structured input tabs</div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 18px;width:100%;max-width:360px;box-shadow:var(--shadow)">
+        <div style="font-family:'Jost',sans-serif;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:10px">Data Gate — This Week's Status</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;font-size:12px"><span>Primary Sales</span><span style="color:var(--teal-text);font-weight:700">✓ Updated Thu EoD</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px"><span>Hourly Production</span><span style="color:var(--teal-text);font-weight:700">✓ Updated Thu EoD</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px"><span>Demand Plan</span><span style="color:var(--teal-text);font-weight:700">✓ Current month</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px"><span>Planned Downtime</span><span style="color:var(--teal-text);font-weight:700">✓ No changes</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding-top:6px;border-top:1px solid var(--border);font-weight:700"><span>Pipeline Gate</span><span style="color:var(--teal-text);font-weight:800">✓ GO — Running 8:30am</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="data-sources" id="ds-list2">
+      <div class="ds-node" id="ds8"><div class="ds-icon">🔄</div><div class="ds-info"><div class="ds-name">Stock Transfer</div><div class="ds-freq">Daily · Reconciliation</div></div></div>
+      <div class="ds-node" id="ds9"><div class="ds-icon">📈</div><div class="ds-info"><div class="ds-name">Stock Build-up</div><div class="ds-freq">Monthly · Forward stock flags</div></div></div>
+      <div class="ds-node" id="ds10"><div class="ds-icon">🏖️</div><div class="ds-info"><div class="ds-name">Plant Holidays</div><div class="ds-freq">Monthly · Shift calendar</div></div></div>
+      <div class="ds-node" id="ds11"><div class="ds-icon">🚚</div><div class="ds-info"><div class="ds-name">Procurement Data</div><div class="ds-freq">Monthly · Batch sizes</div></div></div>
+      <div class="ds-node" id="ds12"><div class="ds-icon">⏱️</div><div class="ds-info"><div class="ds-name">Lead Times</div><div class="ds-freq">Monthly · RM arrival windows</div></div></div>
+      <div class="ds-node" id="ds13"><div class="ds-icon">📝</div><div class="ds-info"><div class="ds-name">Active SKU List</div><div class="ds-freq">Monthly · Scope definition</div></div></div>
+      <div class="ds-node" id="ds14"><div class="ds-icon">🏗️</div><div class="ds-info"><div class="ds-name">Planned Production</div><div class="ds-freq">Weekly · Frozen orders</div></div></div>
+      <div class="ds-node" id="ds15"><div class="ds-icon">📥</div><div class="ds-info"><div class="ds-name">SKU in GR</div><div class="ds-freq">Weekly · Outsourced stock</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ACT 4 — THE MODEL
+══════════════════════════════════════════════ -->
+<div class="act" id="act-3">
+  <div class="act-eyebrow">Act 4 — Scenario: Zero-Touch Clean Week</div>
+  <div class="act-title">The Optimiser at Work</div>
+  <div class="act-subtitle">A normal production week. All 16 data sources fresh. No downtime. No RM constraints. Watch the MILP solve from data to shift-sequenced plan — automatically.</div>
+
+  <div class="model-layout">
+    <div class="model-pipeline" id="model-stages">
+
+      <div class="model-stage" id="ms0">
+        <div class="ms-num">1</div>
+        <div class="ms-body">
+          <div class="ms-title">Input Validation & Pre-Processing</div>
+          <div class="ms-desc">All 16 datasets pass the DE gate. 19 model input tabs assembled. Sets, coefficients, and time periods extracted for the solver.</div>
+          <div class="ms-value">✓ 19 tabs validated · 42 SKUs in scope · 9-week horizon</div>
+        </div>
+      </div>
+
+      <div class="model-stage" id="ms1">
+        <div class="ms-num">2</div>
+        <div class="ms-body">
+          <div class="ms-title">Reward Function Construction</div>
+          <div class="ms-desc">For each order and time period, a reward value is computed — highest when produced at the right week (minimises OOS), penalised for earliness (working capital) or lateness (lost sales).</div>
+          <div class="ms-value">✓ 1,764 order × time-period reward values computed</div>
+        </div>
+      </div>
+
+      <div class="model-stage" id="ms2">
+        <div class="ms-num">3</div>
+        <div class="ms-body">
+          <div class="ms-title">Top Level MILP Solve</div>
+          <div class="ms-desc">Solver maximises: Σ reward × production — shift costs — changeover costs — excess stock penalties. Subject to equipment capacity, raw material batches, union shift scenarios, min order quantities, warehouse ceiling.</div>
+          <div class="ms-value">✓ Optimal solution found · Line 3: Scenario 2 · Line 4: Scenario 3 · 12 shifts selected</div>
+        </div>
+      </div>
+
+      <div class="model-stage" id="ms3">
+        <div class="ms-num">4</div>
+        <div class="ms-body">
+          <div class="ms-title">Changeover Estimation</div>
+          <div class="ms-desc">Pack-size changeovers and flavour changeovers estimated per line per week. Time carved out of available shift hours to ensure bottom-level schedule is feasible.</div>
+          <div class="ms-value">✓ Line 3: 3 pack changes · 7 flavour changes · Line 4: 2 pack · 5 flavour</div>
+        </div>
+      </div>
+
+      <div class="model-stage" id="ms4">
+        <div class="ms-num">5</div>
+        <div class="ms-body">
+          <div class="ms-title">Bottom Level Scheduling</div>
+          <div class="ms-desc">Within each selected shift, orders are sequenced greedily to minimise changeover time. Downtimes, cleaning cycles, and raw material validity windows respected. Spare capacity checked for OOS fill opportunities.</div>
+          <div class="ms-value">✓ Full shift schedule generated · 0 constraint violations · 2 OOS fill orders added</div>
+        </div>
+      </div>
+
+      <div class="model-stage" id="ms5">
+        <div class="ms-num">6</div>
+        <div class="ms-body">
+          <div class="ms-title">Output Export to SharePoint</div>
+          <div class="ms-desc">Two plan variants (with and without RM constraint) copied to SharePoint. Planner reviews by 9am. Total elapsed time from pipeline start: 22 minutes.</div>
+          <div class="ms-value" style="color:var(--teal-text)">✓ Plan ready 08:52am — 22 min total · Zero manual input required</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="model-sidebar">
+      <div class="scenario-card">
+        <div class="sc-label">Active Scenario</div>
+        <div class="sc-title">Zero-Touch Clean Week</div>
+        <div class="sc-row"><span>Week</span><span>W14 / 2024</span></div>
+        <div class="sc-row"><span>Lines in scope</span><span>Line 3 + Line 4</span></div>
+        <div class="sc-row"><span>SKUs in plan</span><span>42 CSD SKUs</span></div>
+        <div class="sc-row"><span>Planned shifts</span><span>12 shifts</span></div>
+        <div class="sc-row"><span>Downtimes</span><span>None</span></div>
+        <div class="sc-row"><span>RM constraints</span><span>None binding</span></div>
+        <div class="sc-row"><span>Solver</span><span>PuLP / CBC</span></div>
+        <div class="sc-row"><span>Runtime</span><span>22 minutes</span></div>
+      </div>
+      <button class="replay-btn" onclick="replayModel()">↺ Replay Pipeline</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ACT 5 — OUTPUT
+══════════════════════════════════════════════ -->
+<div class="act" id="act-4">
+  <div class="act-eyebrow">Act 5</div>
+  <div class="act-title">What the Planner Receives</div>
+  <div class="act-subtitle">By 9am Friday, two delivery surfaces are ready — a live production dashboard and a shift-sequenced schedule. The planner's job shifts from building to reviewing.</div>
+
+  <div class="output-tabs">
+    <button class="otab active" onclick="switchTab(this,'tab-dash')">📊 Production Dashboard</button>
+    <button class="otab" onclick="switchTab(this,'tab-ba')">🔄 Before / After — Planner View</button>
+  </div>
+
+  <!-- DASHBOARD TAB -->
+  <div class="otab-content active" id="tab-dash">
+    <button class="fullscreen-btn" onclick="openFS()">⛶ Full Screen</button>
+    <div style="clear:both"></div>
+
+    <div class="dash-kpi-strip">
+      <div class="kpi-card">
+        <div class="kpi-val good">0.04%</div>
+        <div class="kpi-label">OOS / Sales — this week</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val">2.1 wks</div>
+        <div class="kpi-label">Avg stock cover (vs 3.4 manual)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val great">12</div>
+        <div class="kpi-label">Shifts selected · 2 lines</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val good">22 min</div>
+        <div class="kpi-label">Total pipeline runtime</div>
+      </div>
+    </div>
+
+    <table class="schedule-table">
+      <thead>
+        <tr>
+          <th>Line</th><th>Day</th><th>Shift</th><th>SKU</th><th>Pack</th><th>Volume (cases)</th><th>Changeover</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Line 3</td><td>Mon</td><td>Morning</td><td><span class="sku-pill pill-g">EH Cola 330ml PET</span></td><td>330ml</td><td>4,200</td><td>—</td><td class="status-ok">✓ Scheduled</td></tr>
+        <tr><td>Line 3</td><td>Mon</td><td>Afternoon</td><td><span class="sku-pill pill-g">EH Cola 330ml PET</span></td><td>330ml</td><td>4,100</td><td>Flavour → Lemon</td><td class="status-ok">✓ Scheduled</td></tr>
+        <tr><td>Line 3</td><td>Tue</td><td>Morning</td><td><span class="sku-pill pill-b">EH Lemon 330ml PET</span></td><td>330ml</td><td>3,800</td><td>—</td><td class="status-ok">✓ Scheduled</td></tr>
+        <tr><td>Line 3</td><td>Tue</td><td>Afternoon</td><td><span class="sku-pill pill-o">EH Orange 500ml PET</span></td><td>500ml</td><td>3,200</td><td>Pack + Flavour</td><td class="status-ok">✓ Scheduled</td></tr>
+        <tr><td>Line 4</td><td>Mon</td><td>Morning</td><td><span class="sku-pill pill-g">EH Cola 750ml Glass</span></td><td>750ml</td><td>2,900</td><td>—</td><td class="status-ok">✓ Scheduled</td></tr>
+        <tr><td>Line 4</td><td>Mon</td><td>Afternoon</td><td><span class="sku-pill pill-b">EH Cream Soda 750ml</span></td><td>750ml</td><td>2,600</td><td>Flavour → Cream Soda</td><td class="status-ok">✓ Scheduled</td></tr>
+        <tr><td>Line 4</td><td>Tue</td><td>Morning</td><td><span class="sku-pill pill-o">EH Ginger Beer 330ml</span></td><td>330ml</td><td>1,800</td><td>Pack + Flavour</td><td class="status-ok">✓ Scheduled</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- BEFORE / AFTER TAB -->
+  <div class="otab-content" id="tab-ba">
+    <div class="ba-toggle">
+      <button class="ba-btn active" onclick="toggleBA(this,'ba-before')">← Before: Manual Process</button>
+      <button class="ba-btn" onclick="toggleBA(this,'ba-after')">After: Model-Generated Plan →</button>
+    </div>
+
+    <div class="ba-panel active" id="ba-before">
+      <div class="before-state">
+        <div style="font-family:'Jost',sans-serif;font-size:16px;font-weight:800;color:#C62828;margin-bottom:4px">Manual Plan — Friday, 11:04am</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Planner has spent ~2.5 hours pulling data, building the plan in Excel. Three data tabs still open.</div>
+        <div class="ba-grid">
+          <div class="ba-item"><div class="bi-label">Time to plan</div><div class="bi-val red">2h 34min</div></div>
+          <div class="ba-item"><div class="bi-label">OOS risk visible?</div><div class="bi-val red">No</div></div>
+          <div class="ba-item"><div class="bi-label">WC cost in calculation?</div><div class="bi-val red">No</div></div>
+          <div class="ba-item"><div class="bi-label">RM constraints enforced?</div><div class="bi-val red">By memory</div></div>
+          <div class="ba-item"><div class="bi-label">Shift scenarios validated?</div><div class="bi-val red">Manual check</div></div>
+          <div class="ba-item"><div class="bi-label">Plan complete?</div><div class="bi-val red">~11:00am</div></div>
+        </div>
+        <div class="ba-aside">The planner produced a feasible plan. But "feasible" is not "optimal." Out-of-stock costs and working capital tie-up stayed invisible — and accumulated silently across every SKU that week.</div>
+      </div>
+    </div>
+
+    <div class="ba-panel" id="ba-after">
+      <div class="after-state">
+        <div style="font-family:'Jost',sans-serif;font-size:16px;font-weight:800;color:var(--teal-text);margin-bottom:4px">Model-Generated Plan — Friday, 8:52am</div>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Pipeline ran automatically from 8:30am. Planner opens SharePoint at 9am — plan is ready to review.</div>
+        <div class="ba-grid">
+          <div class="ba-item"><div class="bi-label">Time to plan</div><div class="bi-val green">22 min (automated)</div></div>
+          <div class="ba-item"><div class="bi-label">OOS risk visible?</div><div class="bi-val green">Optimised out</div></div>
+          <div class="ba-item"><div class="bi-label">WC cost in calculation?</div><div class="bi-val green">Yes — penalised</div></div>
+          <div class="ba-item"><div class="bi-label">RM constraints enforced?</div><div class="bi-val green">Automatically</div></div>
+          <div class="ba-item"><div class="bi-label">Shift scenarios validated?</div><div class="bi-val green">Union rules hardcoded</div></div>
+          <div class="ba-item"><div class="bi-label">Plan complete?</div><div class="bi-val green">8:52am</div></div>
+        </div>
+        <div class="ba-aside">The planner's role shifts from plan construction to exception review. The 2.5 hours reclaimed every Friday compounds over 52 weeks — and the plan quality improves simultaneously.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ACT 6 — THE VALUE
+══════════════════════════════════════════════ -->
+<div class="act" id="act-5">
+  <div class="act-eyebrow">Act 6 — i4 Central FIT Validated</div>
+  <div class="act-title">What It Was Worth</div>
+  <div class="act-subtitle">Validated in the January–February 2022 pilot against a 2020–21 normalised baseline. In a real deployment of this scale, the results look like this.</div>
+
+  <div class="value-hero">
+    <div class="vh-num" id="vh-counter">LKR 0M</div>
+    <div class="vh-unit">annual use case value</div>
+    <div class="vh-sub">Range: LKR 22.1M (pilot margins) → LKR 36.6M (Aug 2022 margins)</div>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="mc-val pink" id="mc0">0%</div>
+      <div class="mc-label">Reduction in OOS/Sales ratio<br>January 2022 vs baseline</div>
+    </div>
+    <div class="metric-card">
+      <div class="mc-val teal" id="mc1">0%</div>
+      <div class="mc-label">Reduction in OOS/Sales ratio<br>February 2022 vs baseline</div>
+    </div>
+    <div class="metric-card">
+      <div class="mc-val" id="mc2">0 min</div>
+      <div class="mc-label">Manual planning time per week<br>reduced to (from ~150 min)</div>
+    </div>
+  </div>
+
+  <div class="bar-section">
+    <h3>OOS / Sales Ratio — Baseline vs Pilot</h3>
+    <div class="bar-row">
+      <div class="br-label">Jan 2020–21 avg</div>
+      <div class="br-track"><div class="br-fill before" id="b0" data-w="100"></div></div>
+      <div class="br-val">1.47%</div>
+    </div>
+    <div class="bar-row">
+      <div class="br-label">Jan 2022 (pilot)</div>
+      <div class="br-track"><div class="br-fill after" id="b1" data-w="2.7"></div></div>
+      <div class="br-val" style="color:var(--teal-text);font-weight:800">0.04%</div>
+    </div>
+    <div class="bar-row" style="margin-top:10px">
+      <div class="br-label">Feb 2020–21 avg</div>
+      <div class="br-track"><div class="br-fill before" id="b2" data-w="85"></div></div>
+      <div class="br-val">1.28%</div>
+    </div>
+    <div class="bar-row">
+      <div class="br-label">Feb 2022 (pilot)</div>
+      <div class="br-track"><div class="br-fill after" id="b3" data-w="10.9"></div></div>
+      <div class="br-val" style="color:var(--teal-text);font-weight:800">0.14%</div>
+    </div>
+  </div>
+
+  <div class="deployment-note" style="margin-top:16px">In a real deployment · Pilot period Jan–Feb 2022 · i4 Central FIT sign-off · BAU since 2022</div>
+
+  <div class="octave-footer">
+    <span>OCTAVE</span> &nbsp;·&nbsp; Factory Production Planning &nbsp;·&nbsp; CCS Beverages &nbsp;·&nbsp; Confidential
+  </div>
+</div>
+
+</div><!-- end stage -->
+
+<!-- FULLSCREEN OVERLAY -->
+<div id="fs-overlay">
+  <button class="fs-close" onclick="closeFS()">✕ Exit Full Screen</button>
+  <div style="font-family:'Jost',sans-serif;font-size:22px;font-weight:800;color:var(--navy);margin-bottom:24px;margin-top:8px">Production Dashboard — Week 14 / 2024</div>
+  <div class="dash-kpi-strip" style="margin-bottom:28px">
+    <div class="kpi-card"><div class="kpi-val good">0.04%</div><div class="kpi-label">OOS / Sales — this week</div></div>
+    <div class="kpi-card"><div class="kpi-val">2.1 wks</div><div class="kpi-label">Avg stock cover</div></div>
+    <div class="kpi-card"><div class="kpi-val great">12</div><div class="kpi-label">Shifts selected · 2 lines</div></div>
+    <div class="kpi-card"><div class="kpi-val good">22 min</div><div class="kpi-label">Pipeline runtime</div></div>
+  </div>
+  <table class="schedule-table" style="font-size:13px">
+    <thead><tr><th>Line</th><th>Day</th><th>Shift</th><th>SKU</th><th>Pack</th><th>Volume (cases)</th><th>Changeover</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Line 3</td><td>Monday</td><td>Morning 06:00–14:00</td><td><span class="sku-pill pill-g">EH Cola 330ml PET</span></td><td>330ml</td><td>4,200</td><td>—</td><td class="status-ok">✓ Scheduled</td></tr>
+      <tr><td>Line 3</td><td>Monday</td><td>Afternoon 14:00–22:00</td><td><span class="sku-pill pill-g">EH Cola 330ml PET</span></td><td>330ml</td><td>4,100</td><td>Flavour → Lemon (18 min)</td><td class="status-ok">✓ Scheduled</td></tr>
+      <tr><td>Line 3</td><td>Tuesday</td><td>Morning 06:00–14:00</td><td><span class="sku-pill pill-b">EH Lemon 330ml PET</span></td><td>330ml</td><td>3,800</td><td>—</td><td class="status-ok">✓ Scheduled</td></tr>
+      <tr><td>Line 3</td><td>Tuesday</td><td>Afternoon 14:00–22:00</td><td><span class="sku-pill pill-o">EH Orange 500ml PET</span></td><td>500ml</td><td>3,200</td><td>Pack + Flavour (34 min)</td><td class="status-ok">✓ Scheduled</td></tr>
+      <tr><td>Line 4</td><td>Monday</td><td>Morning 06:00–14:00</td><td><span class="sku-pill pill-g">EH Cola 750ml Glass</span></td><td>750ml</td><td>2,900</td><td>—</td><td class="status-ok">✓ Scheduled</td></tr>
+      <tr><td>Line 4</td><td>Monday</td><td>Afternoon 14:00–22:00</td><td><span class="sku-pill pill-b">EH Cream Soda 750ml</span></td><td>750ml</td><td>2,600</td><td>Flavour → Cream Soda (22 min)</td><td class="status-ok">✓ Scheduled</td></tr>
+      <tr><td>Line 4</td><td>Tuesday</td><td>Morning 06:00–14:00</td><td><span class="sku-pill pill-o">EH Ginger Beer 330ml</span></td><td>330ml</td><td>1,800</td><td>Pack + Flavour (34 min)</td><td class="status-ok">✓ Scheduled</td></tr>
+      <tr><td>Line 3</td><td>Wednesday</td><td>Morning 06:00–14:00</td><td><span class="sku-pill pill-g">EH Cola 330ml PET</span></td><td>330ml</td><td>4,050</td><td>Pack (12 min)</td><td class="status-ok">✓ Scheduled</td></tr>
+      <tr><td>Line 4</td><td>Wednesday</td><td>Morning 06:00–14:00</td><td><span class="sku-pill pill-b">EH Lemon 750ml Glass</span></td><td>750ml</td><td>2,400</td><td>Flavour (18 min)</td><td class="status-ok">✓ Scheduled</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- NAV -->
+<div id="nav">
+  <button class="nav-btn btn-back" id="btn-back" onclick="prev()" disabled>← Back</button>
+  <div class="nav-act" id="nav-label">Act 1 of 6</div>
+  <button class="nav-btn btn-next" id="btn-next" onclick="next()">Next →</button>
+</div>
+
+<script>
+let cur = 0;
+const TOTAL = 6;
+const actLabels = ['Act 1 of 6 — The Problem','Act 2 of 6 — Solution Overview','Act 3 of 6 — The Data','Act 4 of 6 — The Model','Act 5 of 6 — Output','Act 6 of 6 — The Value'];
+
+function goTo(n) {
+  if (n < 0 || n >= TOTAL) return;
+  const prev = document.getElementById('act-' + cur);
+  prev.classList.remove('visible');
+  setTimeout(() => {
+    prev.classList.remove('active');
+    cur = n;
+    const next = document.getElementById('act-' + cur);
+    next.classList.add('active');
+    setTimeout(() => next.classList.add('visible'), 20);
+    updateProgress();
+    updateNav();
+    onActEnter(cur);
+  }, 200);
+}
+
+function next() { goTo(cur + 1); }
+function prev() { goTo(cur - 1); }
+
+function updateProgress() {
+  const segs = document.querySelectorAll('.seg');
+  segs.forEach((s, i) => {
+    s.classList.remove('active','done');
+    if (i === cur) s.classList.add('active');
+    else if (i < cur) s.classList.add('done');
+  });
+}
+
+function updateNav() {
+  document.getElementById('btn-back').disabled = cur === 0;
+  document.getElementById('btn-next').textContent = cur === TOTAL-1 ? 'Finish ✓' : 'Next →';
+  document.getElementById('nav-label').textContent = actLabels[cur];
+}
+
+// ── ACT ENTRY HOOKS ──────────────────────────────────────
+function onActEnter(n) {
+  if (n === 1) animatePipeline();
+  if (n === 2) animateDataNodes();
+  if (n === 3) runModelStages();
+  if (n === 5) animateValue();
+}
+
+// Act 2 pipeline
+function animatePipeline() {
+  [0,1,2,3].forEach((i,idx) => {
+    setTimeout(() => {
+      document.getElementById('pn'+i).classList.add('visible');
+      if (i < 3) {
+        setTimeout(() => { document.getElementById('pa'+i).style.opacity='1'; }, 200);
+      }
+    }, idx * 250);
+  });
+}
+
+// Act 3 data nodes
+function animateDataNodes() {
+  const all = [...document.querySelectorAll('.ds-node')];
+  all.forEach((n, i) => {
+    setTimeout(() => n.classList.add('visible'), i * 100);
+  });
+  setTimeout(() => document.getElementById('dp-out').classList.add('visible'), all.length * 100 + 400);
+}
+
+// Act 4 model stages
+let modelTimer = null;
+function runModelStages() {
+  const stages = document.querySelectorAll('.model-stage');
+  stages.forEach(s => s.classList.remove('running','complete'));
+  let i = 0;
+  function tick() {
+    if (i > 0) {
+      stages[i-1].classList.remove('running');
+      stages[i-1].classList.add('complete');
+    }
+    if (i < stages.length) {
+      stages[i].classList.add('running');
+      i++;
+      modelTimer = setTimeout(tick, 900);
+    } else {
+      stages[stages.length-1].classList.remove('running');
+      stages[stages.length-1].classList.add('complete');
+    }
+  }
+  tick();
+}
+
+function replayModel() {
+  if (modelTimer) clearTimeout(modelTimer);
+  runModelStages();
+}
+
+// Act 6 value animation
+function animateValue() {
+  // headline counter
+  const el = document.getElementById('vh-counter');
+  const target = 36.6;
+  let start = null;
+  function step(ts) {
+    if (!start) start = ts;
+    const p = Math.min((ts - start) / 1200, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = 'LKR ' + (ease * target).toFixed(1) + 'M';
+    if (p < 1) requestAnimationFrame(step);
+    else el.textContent = 'LKR 36.6M';
+  }
+  requestAnimationFrame(step);
+
+  // metric counters
+  animateCount('mc0', 0, 97, '%', 1200);
+  animateCount('mc1', 0, 89, '%', 1200);
+  animateCount('mc2', 150, 0, ' min', 1200);
+
+  // bars
+  setTimeout(() => {
+    document.querySelectorAll('.br-fill').forEach(b => {
+      b.style.width = b.dataset.w + '%';
+    });
+  }, 300);
+}
+
+function animateCount(id, from, to, suffix, duration) {
+  const el = document.getElementById(id);
+  let start = null;
+  function step(ts) {
+    if (!start) start = ts;
+    const p = Math.min((ts - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * ease) + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// Output tabs
+function switchTab(btn, tabId) {
+  document.querySelectorAll('.otab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.otab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+// Before/after toggle
+function toggleBA(btn, panelId) {
+  document.querySelectorAll('.ba-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.ba-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// Fullscreen
+function openFS() {
+  document.getElementById('fs-overlay').classList.add('visible');
+}
+function closeFS() {
+  document.getElementById('fs-overlay').classList.remove('visible');
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeFS();
+  if (e.key === 'ArrowRight' && !document.getElementById('fs-overlay').classList.contains('visible')) next();
+  if (e.key === 'ArrowLeft' && !document.getElementById('fs-overlay').classList.contains('visible')) prev();
+});
+
+// Init
+(function(){
+  document.getElementById('act-0').classList.add('active');
+  setTimeout(() => document.getElementById('act-0').classList.add('visible'), 20);
+  updateProgress();
+  updateNav();
+})();
+</script>
+</body>
+</html>

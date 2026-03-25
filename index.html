@@ -40,6 +40,23 @@
         animation: fadeInUp 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
 
+      @media (max-width: 1100px) {
+        .usecase-flow-grid {
+          grid-template-columns: 1fr !important;
+          gap: 18px !important;
+        }
+
+        .usecase-flow-connector {
+          display: none !important;
+        }
+      }
+
+      @media (max-width: 720px) {
+        body {
+          font-size: 14px;
+        }
+      }
+
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-track { background: #F7F8FA; }
       ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }

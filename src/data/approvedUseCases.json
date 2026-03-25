@@ -2,6 +2,7 @@
   {
     "id": "factory-production-planning",
     "title": "Factory Production Planning",
+    "icon": "production",
     "industry": "FMCG",
     "valueChain": "Production & Planning",
     "tagline": "Optimize Production Planning",
@@ -16,6 +17,7 @@
   {
     "id": "energy-optimization",
     "title": "Energy Optimisation",
+    "icon": "energy",
     "industry": "Leisure & Hospitality",
     "valueChain": "Property Operations",
     "tagline": "Reduce energy consumption through AI-driven chiller and HVAC setpoint optimisation",
@@ -30,22 +32,27 @@
       "sources": [
         {
           "name": "Building Management System (BMS)",
+          "icon": "building",
           "description": "Real-time chiller operating parameters — current setpoint, compressor load, supply and return water temperatures."
         },
         {
           "name": "Property Management System (PMS)",
+          "icon": "occupancy",
           "description": "Live and forecast occupancy data by room type and time slot. The primary demand signal for the model."
         },
         {
           "name": "Weather Forecast API",
+          "icon": "weather",
           "description": "Hourly temperature, humidity, and heat-index forecasts for the next 24 hours. Drives the external heat load calculation."
         },
         {
           "name": "Smart Metering",
+          "icon": "meter",
           "description": "15-minute interval energy consumption data. Used to measure baseline and validate savings after each recommendation."
         },
         {
           "name": "Historical Operations Log",
+          "icon": "history",
           "description": "12+ months of past setpoints, occupancy, and consumption. Used to train the baseline consumption model."
         }
       ]
@@ -103,6 +110,7 @@
   {
     "id": "retail-fraud-detection",
     "title": "Retail Fraud Detection",
+    "icon": "fraud",
     "industry": "Retail",
     "valueChain": "Store Operations",
     "tagline": "Minimizing retail fraud",

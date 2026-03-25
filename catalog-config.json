@@ -3,12 +3,14 @@
     {
       "id": "retail",
       "name": "Retail",
+      "icon": "retail",
       "tagline": "From shelf to checkout — optimise every decision in the retail value chain",
       "useCaseCount": 18,
       "valueChains": [
         {
           "id": "buying-ranging",
           "label": "Buying & Ranging",
+          "icon": "buying",
           "summary": "Range architecture, assortment planning, and product lifecycle decisions",
           "useCases": [
             "Assortment Optimisation",
@@ -19,6 +21,7 @@
         {
           "id": "pricing-promotions",
           "label": "Pricing & Promotions",
+          "icon": "pricing",
           "summary": "Competitive pricing strategies and promotional ROI optimisation",
           "useCases": [
             "Dynamic Pricing",
@@ -29,6 +32,7 @@
         {
           "id": "supply-chain",
           "label": "Supply Chain",
+          "icon": "supply",
           "summary": "Demand-driven inventory and replenishment across the network",
           "useCases": [
             "Fresh Procurement Optimisation",
@@ -39,6 +43,7 @@
         {
           "id": "store-operations",
           "label": "Store Operations",
+          "icon": "operations",
           "summary": "Labour scheduling, shrinkage detection, and in-store efficiency",
           "useCases": [
             "Labour Scheduling",
@@ -49,6 +54,7 @@
         {
           "id": "customer-marketing",
           "label": "Customer & Marketing",
+          "icon": "marketing",
           "summary": "Customer segmentation, personalisation, and lifetime value optimisation",
           "useCases": [
             "Customer Segmentation",
@@ -59,6 +65,7 @@
         {
           "id": "people-finance",
           "label": "People & Finance",
+          "icon": "workforce",
           "summary": "Workforce analytics and financial performance forecasting",
           "useCases": [
             "Attrition Prediction",
@@ -70,12 +77,14 @@
     {
       "id": "fmcg",
       "name": "FMCG",
+      "icon": "fmcg",
       "tagline": "From factory to shelf — drive efficiency across production and distribution",
       "useCaseCount": 14,
       "valueChains": [
         {
           "id": "production-planning",
           "label": "Production & Planning",
+          "icon": "production",
           "summary": "Demand-driven production scheduling and capacity optimisation",
           "useCases": [
             "Production Scheduling",
@@ -87,6 +96,7 @@
         {
           "id": "distribution-logistics",
           "label": "Distribution & Logistics",
+          "icon": "logistics",
           "summary": "Route optimisation and distribution network efficiency",
           "useCases": [
             "Route Optimisation",
@@ -96,6 +106,7 @@
         {
           "id": "trade-promotions",
           "label": "Trade & Promotions",
+          "icon": "pricing",
           "summary": "Trade spend optimisation and promotional effectiveness",
           "useCases": [
             "Trade Spend Optimisation",
@@ -105,6 +116,7 @@
         {
           "id": "sales-force",
           "label": "Sales Force",
+          "icon": "workforce",
           "summary": "Territory planning and sales force effectiveness",
           "useCases": [
             "Territory Optimisation",
@@ -114,6 +126,7 @@
         {
           "id": "marketing",
           "label": "Marketing",
+          "icon": "marketing",
           "summary": "Brand performance analytics and media mix modelling",
           "useCases": [
             "Media Mix Modelling",
@@ -125,12 +138,14 @@
     {
       "id": "leisure-hospitality",
       "name": "Leisure & Hospitality",
+      "icon": "hospitality",
       "tagline": "From booking to checkout — optimise revenue, guest experience, and operations",
       "useCaseCount": 13,
       "valueChains": [
         {
           "id": "acquisition-revenue",
           "label": "Acquisition & Revenue",
+          "icon": "revenue",
           "summary": "Dynamic pricing, demand forecasting, and revenue management",
           "useCases": [
             "Dynamic Room Pricing",
@@ -141,6 +156,7 @@
         {
           "id": "guest-experience",
           "label": "Guest Experience",
+          "icon": "guest",
           "summary": "Personalisation, sentiment analysis, and service recovery",
           "useCases": [
             "Guest Personalisation",
@@ -150,6 +166,7 @@
         {
           "id": "food-beverage",
           "label": "Food & Beverage",
+          "icon": "hospitality",
           "summary": "Menu engineering, wastage reduction, and outlet performance",
           "useCases": [
             "Menu Optimisation",
@@ -159,6 +176,7 @@
         {
           "id": "property-operations",
           "label": "Property Operations",
+          "icon": "operations",
           "summary": "Energy efficiency, maintenance prediction, and asset optimisation",
           "useCases": [
             "Energy Optimisation",
@@ -168,6 +186,7 @@
         {
           "id": "workforce",
           "label": "Workforce",
+          "icon": "workforce",
           "summary": "Labour scheduling, productivity analytics, and rostering",
           "useCases": [
             "Labour Scheduling",
@@ -179,12 +198,14 @@
     {
       "id": "banking-financial-services",
       "name": "Banking & Financial Services",
+      "icon": "banking",
       "tagline": "From acquisition to retention — data-driven decisions across the customer lifecycle",
       "useCaseCount": 11,
       "valueChains": [
         {
           "id": "customer-acquisition",
           "label": "Customer Acquisition",
+          "icon": "acquisition",
           "summary": "Lead scoring, campaign optimisation, and propensity modelling",
           "useCases": [
             "Lead Scoring",
@@ -194,6 +215,7 @@
         {
           "id": "customer-retention",
           "label": "Customer Retention",
+          "icon": "retention",
           "summary": "Churn prediction, next-best-action, and lifetime value",
           "useCases": [
             "Churn Prediction",
@@ -204,6 +226,7 @@
         {
           "id": "underwriting-risk",
           "label": "Underwriting & Risk",
+          "icon": "risk",
           "summary": "Credit risk modelling, fraud detection, and underwriting automation",
           "useCases": [
             "Credit Scoring",
@@ -213,6 +236,7 @@
         {
           "id": "agent-productivity",
           "label": "Agent Productivity",
+          "icon": "workforce",
           "summary": "Call centre analytics and agent performance optimisation",
           "useCases": [
             "Call Routing Optimisation",
@@ -224,12 +248,14 @@
     {
       "id": "transport-energy",
       "name": "Transport & Energy",
+      "icon": "transport",
       "tagline": "From demand to dispatch — optimise planning, procurement, and network efficiency",
       "useCaseCount": 8,
       "valueChains": [
         {
           "id": "demand-planning",
           "label": "Demand Planning",
+          "icon": "forecast",
           "summary": "Demand forecasting and capacity planning for transport networks",
           "useCases": [
             "Passenger Demand Forecasting",
@@ -239,6 +265,7 @@
         {
           "id": "procurement-dispatch",
           "label": "Procurement & Dispatch",
+          "icon": "dispatch",
           "summary": "Procurement cost optimisation and dispatch scheduling",
           "useCases": [
             "Fuel Procurement Optimisation",
