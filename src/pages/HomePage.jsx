@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { CATALOG } from '../data/catalog'
+import { Icon } from '../components/icons'
 
 const HomePage = ({ onSelectIndustry }) => {
   const [visible, setVisible] = useState(false)
@@ -7,7 +8,7 @@ const HomePage = ({ onSelectIndustry }) => {
   useEffect(() => { setTimeout(() => setVisible(true), 50) }, [])
 
   return (
-    <div className="page-enter" style={{ minHeight: '100vh', padding: '120px 48px 120px', background: '#F7F8FA' }}>
+    <div className="page-enter" style={{ minHeight: '100vh', padding: '120px clamp(20px, 4vw, 48px) 120px', background: 'radial-gradient(circle at top, rgba(232,42,174,0.08), transparent 28%), linear-gradient(180deg, #FCFCFE 0%, #F7F8FA 46%, #F2F5FA 100%)' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', marginBottom: '72px', textAlign: 'center' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '24px', background: 'rgba(232,42,174,0.06)', border: '1px solid rgba(232,42,174,0.15)', borderRadius: '999px', padding: '6px 16px' }}>
           <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#E82AAE' }} />
@@ -21,27 +22,48 @@ const HomePage = ({ onSelectIndustry }) => {
         </p>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '22px' }}>
         {CATALOG.map((industry, i) => (
           <div key={industry.id} onClick={() => onSelectIndustry(industry)}
             onMouseEnter={() => setHovered(industry.id)} onMouseLeave={() => setHovered(null)}
             style={{
-              background: '#FFFFFF', borderRadius: '14px', padding: '28px', cursor: 'pointer',
-              border: `1px solid ${hovered === industry.id ? 'rgba(232,42,174,0.2)' : 'rgba(0,0,0,0.08)'}`,
-              borderTop: `3px solid ${hovered === industry.id ? '#E82AAE' : 'transparent'}`,
+              background: '#FFFFFF', borderRadius: '24px', padding: '28px', cursor: 'pointer',
+              border: `1px solid ${hovered === industry.id ? `${industry.accent}44` : 'rgba(0,0,0,0.08)'}`,
               transform: hovered === industry.id ? 'translateY(-4px)' : 'translateY(0)',
               transition: 'all 300ms cubic-bezier(0.16,1,0.3,1)',
-              boxShadow: hovered === industry.id ? '0 12px 32px rgba(0,0,0,0.1)' : '0 2px 8px rgba(0,0,0,0.04)',
+              boxShadow: hovered === industry.id ? `0 18px 42px ${industry.accent}20` : '0 8px 24px rgba(15,23,42,0.05)',
               opacity: visible ? 1 : 0,
+              overflow: 'hidden',
+              position: 'relative',
             }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-              <h2 style={{ fontFamily: 'Jost, sans-serif', fontSize: '20px', fontWeight: 700, color: '#1A1A2E' }}>{industry.name}</h2>
-              <span style={{ fontFamily: 'Jost, sans-serif', fontSize: '22px', fontWeight: 700, color: hovered === industry.id ? '#E82AAE' : '#D1D5DB', transition: 'color 300ms' }}>{industry.useCaseCount}</span>
+            <div style={{ position: 'absolute', inset: '-30% -10% auto auto', width: '180px', height: '180px', borderRadius: '50%', background: `radial-gradient(circle, ${industry.accent}1C 0%, transparent 68%)`, pointerEvents: 'none' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px', position: 'relative' }}>
+              <div style={{ width: '60px', height: '60px', borderRadius: '18px', background: `${industry.accent}12`, color: industry.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name={industry.iconKey} size={30} />
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontFamily: 'Jost, sans-serif', fontSize: '11px', fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.08em' }}>LIVE CATALOG</div>
+                <span style={{ fontFamily: 'Jost, sans-serif', fontSize: '30px', lineHeight: 1, fontWeight: 700, color: hovered === industry.id ? industry.accent : '#D1D5DB', transition: 'color 300ms' }}>{industry.useCaseCount}</span>
+              </div>
             </div>
-            <p style={{ color: '#6B7280', fontSize: '13px', lineHeight: 1.6, marginBottom: '20px' }}>{industry.tagline}</p>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 style={{ fontFamily: 'Jost, sans-serif', fontSize: '22px', fontWeight: 700, color: '#1A1A2E', marginBottom: '10px', position: 'relative' }}>{industry.name}</h2>
+            <p style={{ color: '#6B7280', fontSize: '13px', lineHeight: 1.6, marginBottom: '22px', position: 'relative' }}>{industry.tagline}</p>
+            <div style={{ display: 'grid', gap: '9px', marginBottom: '22px', position: 'relative' }}>
+              {industry.valueChains.slice(0, 4).map((vc, idx) => (
+                <div key={vc.id} style={{ display: 'grid', gridTemplateColumns: '24px 1fr auto', gap: '10px', alignItems: 'center' }}>
+                  <div style={{ width: '24px', height: '24px', borderRadius: '8px', background: `${vc.accent}12`, color: vc.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name={vc.iconKey} size={13} />
+                  </div>
+                  <div style={{ position: 'relative', height: '8px', borderRadius: '999px', background: 'rgba(148,163,184,0.16)', overflow: 'hidden' }}>
+                    <div style={{ width: `${48 + idx * 12}%`, height: '100%', borderRadius: '999px', background: `linear-gradient(90deg, ${industry.accent}, ${vc.accent})` }} />
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#6B7280', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>{vc.label}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
               <span style={{ fontSize: '12px', color: '#9CA3AF' }}>{industry.valueChains.length} value chains</span>
-              <span style={{ fontSize: '13px', color: hovered === industry.id ? '#E82AAE' : '#9CA3AF', transition: 'color 300ms' }}>Explore →</span>
+              <span style={{ fontSize: '13px', color: hovered === industry.id ? industry.accent : '#9CA3AF', fontWeight: 600, transition: 'color 300ms' }}>Explore ecosystem →</span>
             </div>
           </div>
         ))}

@@ -1,5 +1,19 @@
 [
   {
+    "id": "factory-production-planning",
+    "title": "Factory Production Planning",
+    "industry": "FMCG",
+    "valueChain": "Production & Planning",
+    "tagline": "Optimizing Production Planning",
+    "status": "approved",
+    "complexity": "Medium",
+    "roi": "97% reduction in OOS/Sales Ratio",
+    "deployTime": "8-12 Weeks",
+    "publishedDate": "2026-03-24",
+    "hasDemo": true,
+    "demoPath": "/demos/factory-production-planning/demo.html"
+  },
+  {
     "id": "energy-optimization",
     "title": "Energy Optimisation",
     "industry": "Leisure & Hospitality",
@@ -85,5 +99,19 @@
     ],
     "hasDemo": true,
     "demoPath": "/demos/energy-optimization/demo.html"
+  },
+  {
+    "id": "retail-fraud-detection",
+    "title": "Retail Fraud Detection",
+    "industry": "Retail",
+    "valueChain": "Store Operations",
+    "tagline": "Minimizing retail fraud",
+    "status": "approved",
+    "complexity": "Medium",
+    "roi": "10% reduction in Shrinkage",
+    "deployTime": "8-12 weeks",
+    "publishedDate": "2026-03-24",
+    "hasDemo": true,
+    "demoPath": "/demos/retail-fraud-detection/demo.html"
   }
 ]
