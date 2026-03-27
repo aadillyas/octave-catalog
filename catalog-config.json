@@ -209,7 +209,8 @@
           "summary": "Lead scoring, campaign optimisation, and propensity modelling",
           "useCases": [
             "Lead Scoring",
-            "Campaign Optimisation"
+            "Campaign Optimisation",
+            "Customer Enrichment"
           ]
         },
         {
