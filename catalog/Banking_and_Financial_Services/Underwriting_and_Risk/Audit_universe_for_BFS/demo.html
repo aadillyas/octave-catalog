@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Universe — Risk Intelligence Platform v4.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans','Segoe UI',system-ui,sans-serif;background:#fff;color:#111827}
+#root{min-height:100vh}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#9ca3af}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+input:focus{outline:none}
+button{font-family:inherit}
+#loading-msg{display:flex;align-items:center;justify-content:center;min-height:100vh;color:#6b7280;font-size:14px;flex-direction:column;gap:12px}
+#loading-msg .spinner{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="root">
+  <div id="loading-msg">
+    <div class="spinner"></div>
+    <div>Loading Audit Universe Platform…</div>
+  </div>
+</div>
+
+<!--
+  DEPENDENCY LOAD ORDER (critical):
+  1. React 18
+  2. ReactDOM 18
+  3. prop-types (required by Recharts)
+  4. Recharts (depends on React + prop-types)
+  5. Babel standalone (JSX transpiler)
+-->
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
+<script>
+  // Recharts expects PropTypes on window — ensure the global is set
+  if(typeof window.PropTypes==='undefined'&&typeof window.propTypes!=='undefined'){
+    window.PropTypes=window.propTypes;
+  }
+</script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.js"></script>
+<script>
+  // Verify all dependencies loaded
+  var _missing=[];
+  if(typeof React==='undefined')_missing.push('React');
+  if(typeof ReactDOM==='undefined')_missing.push('ReactDOM');
+  if(typeof Recharts==='undefined'){
+    // Try alternative global names
+    if(typeof recharts!=='undefined')window.Recharts=recharts;
+    else if(typeof window.Recharts==='undefined')_missing.push('Recharts');
+  }
+  if(_missing.length>0){
+    document.getElementById('root').innerHTML='<div style="padding:40px;color:#dc2626;font-size:14px"><b>Failed to load dependencies:</b> '+_missing.join(', ')+'<br><br>Please check your internet connection and reload.</div>';
+  }
+</script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+
+<script type="text/babel">
+/* === React === */
+var useState=React.useState;
+var useEffect=React.useEffect;
+var useMemo=React.useMemo;
+
+/* === Recharts === */
+var BarChart=Recharts.BarChart;
+var Bar=Recharts.Bar;
+var XAxis=Recharts.XAxis;
+var YAxis=Recharts.YAxis;
+var CartesianGrid=Recharts.CartesianGrid;
+var Tooltip=Recharts.Tooltip;
+var ResponsiveContainer=Recharts.ResponsiveContainer;
+var PieChart=Recharts.PieChart;
+var Pie=Recharts.Pie;
+var Cell=Recharts.Cell;
+var RadarChart=Recharts.RadarChart;
+var Radar=Recharts.Radar;
+var PolarGrid=Recharts.PolarGrid;
+var PolarAngleAxis=Recharts.PolarAngleAxis;
+var PolarRadiusAxis=Recharts.PolarRadiusAxis;
+var AreaChart=Recharts.AreaChart;
+var Area=Recharts.Area;
+var Legend=Recharts.Legend;
+var Line=Recharts.Line;
+var ComposedChart=Recharts.ComposedChart;
+
+/* === Lucide Icons (inline SVG) === */
+var _iconDB={"Shield":[{"t":"path","a":{"d":"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"}}],"AlertTriangle":[{"t":"path","a":{"d":"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"}},{"t":"path","a":{"d":"M12 9v4"}},{"t":"path","a":{"d":"M12 17h.01"}}],"TrendingUp":[{"t":"polyline","a":{"points":"22 7 13.5 15.5 8.5 10.5 2 17"}},{"t":"polyline","a":{"points":"16 7 22 7 22 13"}}],"Activity":[{"t":"path","a":{"d":"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"}}],"Eye":[{"t":"path","a":{"d":"M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"}},{"t":"circle","a":{"cx":"12","cy":"12","r":"3"}}],"RotateCcw":[{"t":"path","a":{"d":"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"}},{"t":"path","a":{"d":"M3 3v5h5"}}],"Zap":[{"t":"path","a":{"d":"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"}}],"ChevronRight":[{"t":"path","a":{"d":"m9 18 6-6-6-6"}}],"ArrowUpRight":[{"t":"path","a":{"d":"M7 7h10v10"}},{"t":"path","a":{"d":"M7 17 17 7"}}],"ArrowDownRight":[{"t":"path","a":{"d":"m7 7 10 10"}},{"t":"path","a":{"d":"M17 7v10H7"}}],"Clock":[{"t":"circle","a":{"cx":"12","cy":"12","r":"10"}},{"t":"polyline","a":{"points":"12 6 12 12 16 14"}}],"CheckCircle":[{"t":"path","a":{"d":"M22 11.08V12a10 10 0 1 1-5.93-9.14"}},{"t":"path","a":{"d":"m9 11 3 3L22 4"}}],"Bell":[{"t":"path","a":{"d":"M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"}},{"t":"path","a":{"d":"M10.3 21a1.94 1.94 0 0 0 3.4 0"}}],"Target":[{"t":"circle","a":{"cx":"12","cy":"12","r":"10"}},{"t":"circle","a":{"cx":"12","cy":"12","r":"6"}},{"t":"circle","a":{"cx":"12","cy":"12","r":"2"}}],"Layers":[{"t":"path","a":{"d":"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"}},{"t":"path","a":{"d":"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"}},{"t":"path","a":{"d":"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"}}],"GitBranch":[{"t":"line","a":{"x1":"6","x2":"6","y1":"3","y2":"15"}},{"t":"circle","a":{"cx":"18","cy":"6","r":"3"}},{"t":"circle","a":{"cx":"6","cy":"18","r":"3"}},{"t":"path","a":{"d":"M18 9a9 9 0 0 1-9 9"}}],"RefreshCw":[{"t":"path","a":{"d":"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"}},{"t":"path","a":{"d":"M21 3v5h-5"}},{"t":"path","a":{"d":"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"}},{"t":"path","a":{"d":"M8 16H3v5"}}],"BarChart3":[{"t":"path","a":{"d":"M3 3v18h18"}},{"t":"path","a":{"d":"M18 17V9"}},{"t":"path","a":{"d":"M13 17V5"}},{"t":"path","a":{"d":"M8 17v-3"}}],"Search":[{"t":"circle","a":{"cx":"11","cy":"11","r":"8"}},{"t":"path","a":{"d":"m21 21-4.3-4.3"}}],"Briefcase":[{"t":"path","a":{"d":"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"}},{"t":"rect","a":{"width":"20","height":"14","x":"2","y":"6","rx":"2"}}],"CreditCard":[{"t":"rect","a":{"width":"20","height":"14","x":"2","y":"5","rx":"2"}},{"t":"line","a":{"x1":"2","x2":"22","y1":"10","y2":"10"}}],"Landmark":[{"t":"line","a":{"x1":"3","x2":"21","y1":"22","y2":"22"}},{"t":"line","a":{"x1":"6","x2":"6","y1":"18","y2":"11"}},{"t":"line","a":{"x1":"10","x2":"10","y1":"18","y2":"11"}},{"t":"line","a":{"x1":"14","x2":"14","y1":"18","y2":"11"}},{"t":"line","a":{"x1":"18","x2":"18","y1":"18","y2":"11"}},{"t":"polygon","a":{"points":"12 2 20 7 4 7"}}],"Lock":[{"t":"rect","a":{"width":"18","height":"11","x":"3","y":"11","rx":"2","ry":"2"}},{"t":"path","a":{"d":"M7 11V7a5 5 0 0 1 10 0v4"}}],"DollarSign":[{"t":"line","a":{"x1":"12","x2":"12","y1":"2","y2":"22"}},{"t":"path","a":{"d":"M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"}}],"AlertCircle":[{"t":"circle","a":{"cx":"12","cy":"12","r":"10"}},{"t":"line","a":{"x1":"12","x2":"12","y1":"8","y2":"12"}},{"t":"line","a":{"x1":"12","x2":"12.01","y1":"16","y2":"16"}}],"ShieldCheck":[{"t":"path","a":{"d":"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"}},{"t":"path","a":{"d":"m9 12 2 2 4-4"}}],"Gauge":[{"t":"path","a":{"d":"m12 14 4-4"}},{"t":"path","a":{"d":"M3.34 19a10 10 0 1 1 17.32 0"}}],"Database":[{"t":"ellipse","a":{"cx":"12","cy":"5","rx":"9","ry":"3"}},{"t":"path","a":{"d":"M3 5V19A9 3 0 0 0 21 19V5"}},{"t":"path","a":{"d":"M3 12A9 3 0 0 0 21 12"}}],"Bot":[{"t":"path","a":{"d":"M12 8V4H8"}},{"t":"rect","a":{"width":"16","height":"12","x":"4","y":"8","rx":"2"}},{"t":"path","a":{"d":"M2 14h2"}},{"t":"path","a":{"d":"M20 14h2"}},{"t":"path","a":{"d":"M15 13v2"}},{"t":"path","a":{"d":"M9 13v2"}}],"Workflow":[{"t":"rect","a":{"width":"8","height":"8","x":"3","y":"3","rx":"2"}},{"t":"path","a":{"d":"M7 11v4a2 2 0 0 0 2 2h4"}},{"t":"rect","a":{"width":"8","height":"8","x":"13","y":"13","rx":"2"}}],"Award":[{"t":"path","a":{"d":"m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"}},{"t":"circle","a":{"cx":"12","cy":"8","r":"6"}}],"Globe":[{"t":"circle","a":{"cx":"12","cy":"12","r":"10"}},{"t":"path","a":{"d":"M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"}},{"t":"path","a":{"d":"M2 12h20"}}],"Users":[{"t":"path","a":{"d":"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"}},{"t":"circle","a":{"cx":"9","cy":"7","r":"4"}},{"t":"path","a":{"d":"M22 21v-2a4 4 0 0 0-3-3.87"}},{"t":"path","a":{"d":"M16 3.13a4 4 0 0 1 0 7.75"}}],"X":[{"t":"path","a":{"d":"M18 6 6 18"}},{"t":"path","a":{"d":"m6 6 12 12"}}],"FileText":[{"t":"path","a":{"d":"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"}},{"t":"path","a":{"d":"M14 2v4a2 2 0 0 0 2 2h4"}},{"t":"path","a":{"d":"M10 9H8"}},{"t":"path","a":{"d":"M16 13H8"}},{"t":"path","a":{"d":"M16 17H8"}}],"TrendingDown":[{"t":"polyline","a":{"points":"22 17 13.5 8.5 8.5 13.5 2 7"}},{"t":"polyline","a":{"points":"16 17 22 17 22 11"}}],"BookOpen":[{"t":"path","a":{"d":"M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"}},{"t":"path","a":{"d":"M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"}}],"Cpu":[{"t":"rect","a":{"width":"16","height":"16","x":"4","y":"4","rx":"2"}},{"t":"rect","a":{"width":"6","height":"6","x":"9","y":"9","rx":"1"}},{"t":"path","a":{"d":"M15 2v2"}},{"t":"path","a":{"d":"M15 20v2"}},{"t":"path","a":{"d":"M2 15h2"}},{"t":"path","a":{"d":"M2 9h2"}},{"t":"path","a":{"d":"M20 15h2"}},{"t":"path","a":{"d":"M20 9h2"}},{"t":"path","a":{"d":"M9 2v2"}},{"t":"path","a":{"d":"M9 20v2"}}],"Building2":[{"t":"path","a":{"d":"M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"}},{"t":"path","a":{"d":"M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"}},{"t":"path","a":{"d":"M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"}},{"t":"path","a":{"d":"M10 6h4"}},{"t":"path","a":{"d":"M10 10h4"}},{"t":"path","a":{"d":"M10 14h4"}},{"t":"path","a":{"d":"M10 18h4"}}]};
+
+function _mkI(name,props){
+  var paths=_iconDB[name];
+  if(!paths)return null;
+  var sz=props&&props.size?props.size:16;
+  var cl=props&&props.color?props.color:"currentColor";
+  var st=props&&props.style?props.style:{};
+  var svgStyle={display:"inline-block",verticalAlign:"middle",flexShrink:0};
+  for(var k in st)svgStyle[k]=st[k];
+  var children=[];
+  for(var i=0;i<paths.length;i++){
+    var p=paths[i];
+    var attrs={key:i};
+    for(var ak in p.a)attrs[ak]=p.a[ak];
+    children.push(React.createElement(p.t,attrs));
+  }
+  return React.createElement('svg',{
+    width:sz,height:sz,viewBox:"0 0 24 24",
+    fill:"none",stroke:cl,strokeWidth:2,
+    strokeLinecap:"round",strokeLinejoin:"round",
+    style:svgStyle
+  },children);
+}
+
+var Shield=function(p){return _mkI("Shield",p);};
+var AlertTriangle=function(p){return _mkI("AlertTriangle",p);};
+var TrendingUp=function(p){return _mkI("TrendingUp",p);};
+var Activity=function(p){return _mkI("Activity",p);};
+var Eye=function(p){return _mkI("Eye",p);};
+var RotateCcw=function(p){return _mkI("RotateCcw",p);};
+var Zap=function(p){return _mkI("Zap",p);};
+var ChevronRight=function(p){return _mkI("ChevronRight",p);};
+var ArrowUpRight=function(p){return _mkI("ArrowUpRight",p);};
+var ArrowDownRight=function(p){return _mkI("ArrowDownRight",p);};
+var Clock=function(p){return _mkI("Clock",p);};
+var CheckCircle=function(p){return _mkI("CheckCircle",p);};
+var Bell=function(p){return _mkI("Bell",p);};
+var Target=function(p){return _mkI("Target",p);};
+var Layers=function(p){return _mkI("Layers",p);};
+var GitBranch=function(p){return _mkI("GitBranch",p);};
+var RefreshCw=function(p){return _mkI("RefreshCw",p);};
+var BarChart3=function(p){return _mkI("BarChart3",p);};
+var Search=function(p){return _mkI("Search",p);};
+var Briefcase=function(p){return _mkI("Briefcase",p);};
+var CreditCard=function(p){return _mkI("CreditCard",p);};
+var Landmark=function(p){return _mkI("Landmark",p);};
+var Lock=function(p){return _mkI("Lock",p);};
+var DollarSign=function(p){return _mkI("DollarSign",p);};
+var AlertCircle=function(p){return _mkI("AlertCircle",p);};
+var ShieldCheck=function(p){return _mkI("ShieldCheck",p);};
+var Gauge=function(p){return _mkI("Gauge",p);};
+var Database=function(p){return _mkI("Database",p);};
+var Bot=function(p){return _mkI("Bot",p);};
+var Workflow=function(p){return _mkI("Workflow",p);};
+var Award=function(p){return _mkI("Award",p);};
+var Globe=function(p){return _mkI("Globe",p);};
+var Users=function(p){return _mkI("Users",p);};
+var X=function(p){return _mkI("X",p);};
+var FileText=function(p){return _mkI("FileText",p);};
+var TrendingDown=function(p){return _mkI("TrendingDown",p);};
+var BookOpen=function(p){return _mkI("BookOpen",p);};
+var Cpu=function(p){return _mkI("Cpu",p);};
+var Building2=function(p){return _mkI("Building2",p);};
+
+/* === APPLICATION === */
+/* ═══════════════════ TOKENS ═══════════════════ */
+var K={bg:"#ffffff",bg2:"#f7f8fb",card:"#ffffff",border:"#e5e7eb",bhv:"#d1d5db",tx:"#111827",tx2:"#374151",dim:"#6b7280",fnt:"#9ca3af",fnt2:"#d1d5db",grn:"#059669",red:"#dc2626",amb:"#d97706",blu:"#2563eb",vio:"#7c3aed",org:"#ea580c",pnk:"#db2777",cyn:"#0891b2",ros:"#e11d48",sky:"#0284c7",indigo:"#4f46e5"};
+var tt={backgroundColor:"#fff",border:"1px solid #e5e7eb",borderRadius:8,fontSize:11,color:K.tx,boxShadow:"0 4px 16px rgba(0,0,0,0.08)"};
+
+/* ═══════════════════ DATA ═══════════════════ */
+var sd=function(i,lo,hi){return lo+((i*7+13)%(hi-lo+1));};
+var MO=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+var DOMS=["Retail Banking","Corporate Banking","Treasury","Branch Ops","Credit Risk","Fraud","AML","IT Security","Finance","HR & Gov"];
+var DH={"Retail Banking":K.blu,"Corporate Banking":K.vio,"Treasury":K.amb,"Branch Ops":K.red,"Credit Risk":K.grn,"Fraud":K.ros,"AML":K.indigo,"IT Security":K.cyn,"Finance":K.org,"HR & Gov":"#9333ea"};
+var BN=["Colombo Fort","Bambalapitiya","Nugegoda","Kandy","Galle","Negombo","Kurunegala","Matara","Jaffna","Batticaloa","Ratnapura","Anuradhapura","Trincomalee","Badulla","Nuwara Eliya","Panadura","Moratuwa","Dehiwala","Wattala","Kadawatha"];
+var branches=BN.map(function(n,i){return{id:"BR-"+String(i+1).padStart(3,"0"),name:n,risk:sd(i,28,94),up:i%3!==0,anom:sd(i,0,12),passCtrl:sd(i,35,48),failCtrl:sd(i,1,7),pending:sd(i,0,4),lastAudit:sd(i,1,14)+" mo",cashVar:sd(i,0,6)/10,overrides:sd(i,0,18),staffCount:sd(i,12,45),region:["Western","Central","Southern","Northern","Eastern"][i%5]};});
+var GLN=["Cash & Equivalents","Loans Receivable","Interest Income","Fee Income","Suspense Account","Intercompany","Provision for Losses","Accrued Expenses","Deferred Revenue","Capital Reserve","Trade Finance","Card Receivables","FX Revaluation","Staff Costs","Depreciation"];
+var gls=GLN.map(function(n,i){return{gl:String(1000+i*111),name:n,score:sd(i,12,92),mje:sd(i,1,42),dom:DOMS[i%10],lvl:["Low","Medium","High","Critical"][i%4],volume:sd(i,500,9500),reconBreaks:sd(i,0,8),owner:["Treasury","Finance","Risk","Operations","Compliance"][i%5]};});
+
+var ATITLES=["Unusual cash variance","After-hours GL posting","Dormant account spike","Round-number MJE","Unauthorized access","Recon break exceeded","Suspicious cluster","Override frequency spike","Settlement failure","Covenant breach warning","FX limit approach","Card fraud match","AML backlog critical","Privilege escalation","Budget variance anomaly","Intercompany mismatch","Suspense aging breach","Collateral shortfall","Regulatory ratio alert","Whistleblower signal","Vendor payment anomaly","Tax provision variance","Staging migration alert","IT change failure spike","KYC overdue backlog"];
+var SEVS=["Critical","High","Medium","Low"];var STATS=["Open","Investigating","Escalated","Resolved"];var TMS=["Risk Team","Audit Team","Compliance","Operations","IT Security"];
+var alerts=ATITLES.map(function(t,i){return{id:"ALT-"+(2000+i),title:t,sev:SEVS[i%4],dom:DOMS[i%10],stat:STATS[i%4],age:sd(i,1,72),team:TMS[i%5],impact:["High","Medium","Low"][i%3],created:"2026-0"+((i%9)+1)+"-"+String(sd(i,1,28)).padStart(2,"0"),desc:"Automated detection flagged anomalous pattern in "+DOMS[i%10]+". Requires investigation and root cause analysis.",actions:["Investigate data source","Validate with business owner","Determine if control failure","Document findings","Recommend remediation"]};});
+
+var tsd=MO.map(function(m,i){return{month:m,findings:18+sd(i,0,28),resolved:14+sd(i,0,22),recurring:2+sd(i,0,7),risk:42+Math.round(Math.sin(i/1.8)*14)+sd(i,0,8),cov:Math.min(100,46+i*5+sd(i,0,3))};});
+var ctrlD=DOMS.map(function(d,i){return{domain:d,auto:32+sd(i,0,48),fail:sd(i,1,13),eff:62+sd(i,0,34)};});
+var radarD=[{m:"Coverage",p:85,r:72,f:90},{m:"Speed",p:92,r:65,f:78},{m:"Accuracy",p:88,r:80,f:85},{m:"Automation",p:75,r:60,f:82},{m:"Cost Eff.",p:80,r:55,f:88},{m:"Risk Red.",p:90,r:78,f:92}];
+var models=[{n:"Branch Risk Predictor",acc:87,pr:83,rc:91,f1:87,dr:0.02,ok:true,type:"XGBoost",domain:"Branch Audit",freq:"Weekly",features:142,lastTrain:"2026-02-28",ver:"2.4.1"},{n:"GL Anomaly Detector",acc:92,pr:89,rc:94,f1:91,dr:0.01,ok:true,type:"Isolation Forest",domain:"Finance",freq:"Daily",features:87,lastTrain:"2026-03-10",ver:"3.1.0"},{n:"MJE Fraud Scorer",acc:95,pr:93,rc:96,f1:94,dr:0.03,ok:false,type:"Gradient Boosting",domain:"Finance",freq:"Daily",features:64,lastTrain:"2026-03-08",ver:"2.0.3"},{n:"Credit EWS",acc:84,pr:81,rc:88,f1:84,dr:0.05,ok:false,type:"LSTM + RF",domain:"Credit Risk",freq:"Daily",features:215,lastTrain:"2026-02-15",ver:"1.8.2"},{n:"Txn Anomaly Engine",acc:90,pr:87,rc:93,f1:90,dr:0.01,ok:true,type:"Autoencoder",domain:"All Products",freq:"Real-time",features:56,lastTrain:"2026-03-11",ver:"4.0.0"},{n:"Fraud Network GNN",acc:88,pr:85,rc:90,f1:87,dr:0.04,ok:false,type:"Graph Neural Net",domain:"Fraud",freq:"Weekly",features:38,lastTrain:"2026-02-20",ver:"1.2.1"},{n:"AML Alert Prioritizer",acc:86,pr:82,rc:89,f1:85,dr:0.02,ok:true,type:"Random Forest",domain:"AML",freq:"Daily",features:94,lastTrain:"2026-03-09",ver:"2.6.0"},{n:"Control Effectiveness",acc:91,pr:88,rc:93,f1:90,dr:0.01,ok:true,type:"Bayesian Model",domain:"All Domains",freq:"Monthly",features:48,lastTrain:"2026-03-01",ver:"1.5.0"}];
+
+var creditPortfolio=[{seg:"Personal Loans",exp:12400,npa:3.2,s1:82,s2:12,s3:6,color:K.blu,count:45200,avg:274,overdue:1446},{seg:"Mortgages",exp:28600,npa:1.8,s1:89,s2:8,s3:3,color:K.grn,count:18400,avg:1554,overdue:331},{seg:"Credit Cards",exp:4200,npa:5.1,s1:76,s2:15,s3:9,color:K.vio,count:89000,avg:47,overdue:4539},{seg:"Corporate",exp:34800,npa:2.4,s1:85,s2:10,s3:5,color:K.amb,count:2800,avg:12429,overdue:67},{seg:"Trade Finance",exp:8900,npa:1.2,s1:92,s2:6,s3:2,color:K.cyn,count:4200,avg:2119,overdue:50},{seg:"SME",exp:6700,npa:4.7,s1:78,s2:14,s3:8,color:K.org,count:8900,avg:753,overdue:418}];
+var delinquency=MO.map(function(m,i){return{month:m,current:88-Math.round(Math.sin(i/2)*3),dpd30:5+sd(i,0,3),dpd60:3+sd(i,0,2),dpd90:2+sd(i,0,1)};});
+var fraudByChannel=[{channel:"Cards",losses:2400,cases:342,fpRate:28,color:K.ros,mttd:"1.2s",mttr:"14min"},{channel:"Digital",losses:1800,cases:187,fpRate:22,color:K.vio,mttd:"3.8s",mttr:"22min"},{channel:"Branch",losses:600,cases:45,fpRate:15,color:K.amb,mttd:"2.1h",mttr:"4.5h"},{channel:"ATM",losses:900,cases:128,fpRate:31,color:K.org,mttd:"45s",mttr:"28min"},{channel:"Payments",losses:1200,cases:96,fpRate:19,color:K.blu,mttd:"0.8s",mttr:"11min"}];
+var amlOps=[{metric:"Alert Backlog",value:"1,247",target:"<800",warn:true,trend:12},{metric:"Avg Case Age",value:"14d",target:"<10d",warn:true,trend:8},{metric:"SAR Turnaround",value:"6.2d",target:"<5d",warn:true,trend:-5},{metric:"KYC Reviews",value:"87%",target:">95%",warn:true,trend:3},{metric:"Screening Hits",value:"342",target:null,warn:false,trend:-2},{metric:"FP Rate",value:"34%",target:"<25%",warn:true,trend:-4}];
+var regRatios=MO.map(function(m,i){return{month:m,car:14.2+Math.sin(i/2)*0.8+sd(i,0,5)/10,lcr:118+Math.cos(i/3)*8+sd(i,0,4),nsfr:105+Math.sin(i/2.5)*5+sd(i,0,3),min_car:12.5,min_lcr:100};});
+var riskAppetite=[{metric:"Credit Concentration",actual:72,limit:80,color:K.amb},{metric:"Market Risk VaR",actual:45,limit:60,color:K.grn},{metric:"Operational Loss",actual:58,limit:65,color:K.amb},{metric:"Cyber Risk",actual:34,limit:50,color:K.grn},{metric:"Liquidity Buffer",actual:82,limit:70,color:K.grn},{metric:"Compliance",actual:88,limit:85,color:K.grn}];
+var auditCov=[{domain:"Retail Banking",cov:92,fin:14,high:4,open:6},{domain:"Corporate Banking",cov:78,fin:8,high:2,open:4},{domain:"Treasury",cov:85,fin:6,high:1,open:3},{domain:"Branch Ops",cov:96,fin:22,high:8,open:10},{domain:"Credit Risk",cov:88,fin:11,high:3,open:5},{domain:"Fraud",cov:72,fin:9,high:3,open:6},{domain:"AML",cov:81,fin:15,high:5,open:8},{domain:"IT Security",cov:67,fin:7,high:2,open:4},{domain:"Finance",cov:94,fin:5,high:1,open:2},{domain:"HR & Gov",cov:58,fin:3,high:0,open:1}];
+var aiROI=MO.map(function(m,i){return{month:m,savings:Math.round(40+i*18+sd(i,0,15)),manual:Math.max(20,100-i*7-sd(i,0,5)),autoRate:Math.min(82,15+i*6+sd(i,0,3)),detection:Math.min(96,55+i*3.5+sd(i,0,2))};});
+
+var globalProducts=[
+  {cat:"Continuous Auditing",ct:8,banks:"HSBC, JPMorgan, Citi, ING, DBS",color:K.blu,items:[{n:"Full-Population Transaction Testing",bank:"HSBC",status:"Live",impact:"Screens 1B+ txns/month, 2-4x detection vs legacy"},{n:"Automated MJE Testing",bank:"Citi, UBS",status:"Live",impact:"Detect round-number entries, weekend postings, unusual GL pairings"},{n:"Process Mining for Audit",bank:"ING, ABN AMRO",status:"Live",impact:"Map actual vs designed process flows, identify control bypasses"},{n:"Real-time Exception Monitoring",bank:"Goldman Sachs",status:"Live",impact:"Sub-second exception flagging on all transactions"},{n:"RPA in Audit",bank:"DBS, OCBC, ANZ",status:"Live",impact:"Automate data extraction, reconciliation, evidence collection"},{n:"Auto Reconciliation Engines",bank:"JPMorgan, BNY Mellon",status:"Live",impact:"ML matching across sub-ledgers, auto-resolution proposals"},{n:"Control Self-Assessment",bank:"HSBC, Barclays",status:"Pilot",impact:"Digitize RCSA processes across all business units"},{n:"Continuous Control Monitoring",bank:"Deutsche Bank",status:"Pilot",impact:"24/7 automated testing replacing periodic samples"}]},
+  {cat:"Predictive Audit & Risk",ct:7,banks:"Citi, ING, DBS, BBVA, ABN AMRO",color:K.vio,items:[{n:"Predictive Audit Planning",bank:"Citi, ING",status:"Live",impact:"Predict findings per engagement, optimize resource allocation"},{n:"Dynamic Risk Scoring Engine",bank:"HSBC, JPMorgan",status:"Live",impact:"Real-time entity risk scores that adjust on new data"},{n:"Branch Risk Heatmapping",bank:"DBS, UOB, Maybank",status:"Live",impact:"Visual risk ranking for audit prioritization"},{n:"Early Warning Systems (EWS)",bank:"All G-SIBs",status:"Live",impact:"Predict stress 30-90 days ahead"},{n:"Audit Finding Prediction",bank:"ING, Rabobank",status:"Pilot",impact:"ML predicts specific findings from operational data"},{n:"Emerging Risk Detection",bank:"JPMorgan, UBS",status:"Pilot",impact:"NLP on news + internal data for new risks"},{n:"Model Risk Monitoring",bank:"All Basel banks",status:"Live",impact:"PSI, KS drift detection across all deployed models"}]},
+  {cat:"Credit Risk AI",ct:10,banks:"All G-SIBs, Capital One, Santander, BBVA",color:K.grn,items:[{n:"ML Credit Scoring (PD/LGD/EAD)",bank:"All major banks",status:"Live",impact:"More accurate default prediction vs traditional scorecards"},{n:"Behavioral Scoring",bank:"HSBC, DBS, Santander",status:"Live",impact:"Post-origination monitoring for early stress signals"},{n:"Surrogate/Thin-File Scoring",bank:"Nubank, Tyme Bank",status:"Live",impact:"Score unbanked using alternative data"},{n:"IFRS 9 Staging Automation",bank:"All IFRS banks",status:"Live",impact:"Automate Stage 1/2/3 classification and ECL"},{n:"Collections Optimization",bank:"Capital One, Discover",status:"Live",impact:"RL-based treatment optimization per customer"},{n:"Next-Best-Action Restructuring",bank:"BBVA, ING",status:"Pilot",impact:"AI recommends optimal restructuring offers"},{n:"Portfolio Stress Testing",bank:"All G-SIBs",status:"Live",impact:"Monte Carlo + scenario ML under macro stress"},{n:"Credit Memo Generation",bank:"Citi (pilot)",status:"Pilot",impact:"GenAI auto-generates credit assessment memos"},{n:"Collateral Valuation AI",bank:"UBS, HSBC",status:"Pilot",impact:"Computer vision for property/asset valuation"},{n:"Covenant Monitoring",bank:"Deutsche, BNP",status:"Pilot",impact:"NLP extracts and monitors loan covenants"}]},
+  {cat:"Fraud Detection & Prevention",ct:10,banks:"All issuers, HSBC, Barclays, CBA",color:K.ros,items:[{n:"Real-time Card Fraud Scoring",bank:"Visa/MC networks",status:"Live",impact:"<100ms scoring on every card transaction"},{n:"Digital Channel Fraud",bank:"HSBC, Barclays, NAB",status:"Live",impact:"Detect account takeover, session hijacking"},{n:"Mule Account Detection",bank:"HSBC, Lloyds, Westpac",status:"Live",impact:"GNN identifies money mule networks"},{n:"Internal Fraud Detection",bank:"JPMorgan, Citi",status:"Live",impact:"Anomaly detection on employee behavior"},{n:"Check/Image Fraud",bank:"BofA, Chase",status:"Live",impact:"CV detects counterfeit checks, altered amounts"},{n:"Voice Fraud Detection",bank:"Barclays, HSBC",status:"Live",impact:"Voice biometrics for impersonation detection"},{n:"Fraud Simulation",bank:"ANZ, NAB, CBA",status:"Pilot",impact:"Agentic AI simulates novel fraud scenarios"},{n:"Scam Intervention",bank:"CBA, Westpac",status:"Live",impact:"Real-time detection and blocking of scam payments"},{n:"Payment Orchestration",bank:"PayPal/Stripe banks",status:"Live",impact:"Multi-signal fraud scoring across channels"},{n:"Synthetic Identity Detection",bank:"US banks (FinCEN)",status:"Pilot",impact:"Detect fabricated identities from synthetic data"}]},
+  {cat:"AML & Compliance",ct:11,banks:"HSBC, SCB, Deutsche, JPMorgan",color:K.indigo,items:[{n:"ML Transaction Monitoring",bank:"HSBC, SCB",status:"Live",impact:"60%+ false positive reduction vs static rules"},{n:"Intelligent Alert Prioritization",bank:"All major banks",status:"Live",impact:"Risk-score alerts so analysts work highest-risk first"},{n:"Automated SAR Drafting",bank:"Citi (pilot)",status:"Pilot",impact:"GenAI generates SAR narratives from case data"},{n:"KYC File Summarization",bank:"SCB, Barclays",status:"Live",impact:"NLP summarizes customer files for periodic review"},{n:"Adverse Media Screening",bank:"All banks",status:"Live",impact:"NLP + sentiment analysis on news and media"},{n:"Sanctions Screening AI",bank:"HSBC, BNP",status:"Live",impact:"80%+ false positive reduction, 100% hit detection"},{n:"Network Analytics",bank:"HSBC, JPMorgan",status:"Live",impact:"Map suspicious networks for TBML"},{n:"Regulatory Change Mgmt",bank:"Big 4 for banks",status:"Pilot",impact:"NLP parses regulatory updates, maps to controls"},{n:"Regulatory Report Automation",bank:"All banks",status:"Live",impact:"Auto-generate CCAR, DFAST, Basel returns"},{n:"Compliance Chatbots",bank:"HSBC, DBS",status:"Pilot",impact:"NL Q&A on policies via RAG"},{n:"Trade Surveillance",bank:"Goldman, Morgan Stanley",status:"Live",impact:"Monitor comms for market abuse, spoofing"}]},
+  {cat:"OpRisk & IT Audit",ct:10,banks:"JPMorgan, Goldman, HSBC, Barclays",color:K.cyn,items:[{n:"Operational Loss Prediction",bank:"JPMorgan, Citi",status:"Pilot",impact:"Predict op loss events from KRIs"},{n:"IT Access Anomaly (UEBA)",bank:"All major banks",status:"Live",impact:"Detect privilege escalation, data exfiltration"},{n:"Vulnerability Assessment AI",bank:"JPMorgan, Goldman",status:"Live",impact:"ML-assisted pen testing and prioritization"},{n:"Change Failure Prediction",bank:"HSBC, Barclays",status:"Pilot",impact:"Predict which IT changes will fail"},{n:"Incident Response (SOAR)",bank:"All banks (SOC)",status:"Live",impact:"Automated triage and initial response"},{n:"Third-Party Risk Scoring",bank:"JPMorgan, Citi",status:"Live",impact:"AI-scored vendor risk assessment"},{n:"BCP/DR Simulation",bank:"Post-COVID banks",status:"Pilot",impact:"Scenario simulation for resilience planning"},{n:"SoD Analysis",bank:"All SOX banks",status:"Live",impact:"Graph-based SoD conflict detection"},{n:"Data Quality Monitoring",bank:"All banks",status:"Live",impact:"Continuous statistical monitoring of data elements"},{n:"Cloud Security Posture",bank:"Cloud-migrating banks",status:"Live",impact:"ML misconfig detection in cloud infra"}]},
+  {cat:"Audit Documentation AI",ct:7,banks:"Citi, ING, Big 4 for banks",color:K.org,items:[{n:"Audit Report Generation",bank:"Citi, ING",status:"Pilot",impact:"GenAI auto-generates reports from structured data"},{n:"Working Paper Automation",bank:"Big 4 for banks",status:"Live",impact:"Template-based working paper creation"},{n:"Board Report Summarization",bank:"GenAI pilots",status:"Pilot",impact:"Condense detail into exec summaries"},{n:"Policy-Control Mapping",bank:"HSBC, SCB",status:"Pilot",impact:"NLP maps regulations to internal controls"},{n:"Evidence Collection",bank:"ING, ABN AMRO",status:"Live",impact:"RPA + document AI for evidence gathering"},{n:"Finding Root Cause AI",bank:"Citi (IBM Watson)",status:"Live",impact:"NLP + SHAP for root cause identification"},{n:"Reg Exam Preparation",bank:"US banks",status:"Pilot",impact:"AI-assisted regulatory exam materials"}]},
+  {cat:"Next-Gen & Emerging",ct:8,banks:"JPMorgan, Goldman, SWIFT consortium",color:K.pnk,items:[{n:"Autonomous Audit Agents",bank:"Citi, JPMorgan",status:"R&D",impact:"End-to-end autonomous audit with human oversight"},{n:"Digital Twin for Risk",bank:"Goldman, JPMorgan",status:"R&D",impact:"Simulate scenarios on digital bank replica"},{n:"Federated Learning for Fraud",bank:"SWIFT, Mastercard",status:"Pilot",impact:"Collaborative model training without data sharing"},{n:"Quantum Risk Computing",bank:"JPMorgan, HSBC",status:"R&D",impact:"Quantum-enhanced portfolio optimization"},{n:"ESG Risk AI",bank:"EU taxonomy banks",status:"Pilot",impact:"Climate stress testing, ESG scoring"},{n:"Explainable AI (XAI)",bank:"All regulated banks",status:"Live",impact:"SHAP/LIME interpretability for all models"},{n:"Voice Audit Assistants",bank:"Multiple pilots",status:"Pilot",impact:"NL data queries instead of manual extraction"},{n:"Continuous Model Validation",bank:"Basel banks",status:"Pilot",impact:"Ongoing automated model validation"}]}
+];
+
+/* ═══════════════════ PRIMITIVES ═══════════════════ */
+function Bdg(p){return <span style={{fontSize:9,padding:"2px 7px",borderRadius:999,whiteSpace:"nowrap",border:"1px solid "+p.c+"33",background:p.c+"0d",color:p.c,fontWeight:600}}>{p.l}</span>;}
+function Dot(p){return <span style={{display:"inline-block",width:p.sz||7,height:p.sz||7,borderRadius:999,background:p.c,flexShrink:0,animation:p.pulse?"pulse 2s infinite":undefined}}/>;}
+function Prog(p){var v=Number(p.pct)||0;var c=p.c||(v>=80?K.red:v>=60?K.amb:v>=40?"#ca8a04":K.grn);return <div style={{width:"100%",height:p.h||5,borderRadius:999,background:"#f1f3f5"}}><div style={{width:Math.min(v,100)+"%",height:p.h||5,borderRadius:999,background:c,transition:"width .5s"}}/></div>;}
+function SC(s){return s==="Critical"?K.red:s==="High"?K.org:s==="Medium"?K.amb:K.grn;}
+function StC(s){return s==="Open"?K.red:s==="Investigating"?K.amb:s==="Escalated"?K.org:K.grn;}
+function Pnl(p){return <div style={{background:K.card,border:"1px solid "+K.border,borderRadius:12,padding:p.pad||16,boxShadow:"0 1px 3px rgba(0,0,0,0.04)",...(p.s||{})}}>{p.children}</div>;}
+function Kpi(p){var I=p.icon;return(<Pnl><div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}><div style={{padding:6,borderRadius:8,background:p.ac+"10"}}><I size={14} color={p.ac}/></div>{p.tr!=null&&<span style={{fontSize:10,display:"flex",alignItems:"center",gap:1,color:p.tr>0?K.grn:K.red,fontWeight:600}}>{p.tr>0?<ArrowUpRight size={11}/>:<ArrowDownRight size={11}/>}{Math.abs(p.tr)}%</span>}</div><div style={{fontSize:22,fontWeight:700,color:K.tx}}>{p.v}</div><div style={{fontSize:10,color:K.dim,marginTop:2}}>{p.l}</div>{p.sub&&<div style={{fontSize:8,color:K.fnt,marginTop:1}}>{p.sub}</div>}</Pnl>);}
+function Hdr(p){var I=p.icon;return(<div style={{display:"flex",alignItems:"center",gap:10,marginBottom:p.mb!=null?p.mb:14}}><div style={{padding:7,borderRadius:9,background:p.ac+"10"}}><I size={15} color={p.ac}/></div><div><div style={{fontSize:13,fontWeight:700,color:K.tx}}>{p.t}</div>{p.sub&&<div style={{fontSize:9,color:K.fnt}}>{p.sub}</div>}</div>{p.right&&<div style={{marginLeft:"auto"}}>{p.right}</div>}</div>);}
+function G(p){return <div style={{display:"grid",gridTemplateColumns:p.c,gap:p.g||12,...(p.s||{})}}>{p.children}</div>;}
+function F(p){return <div style={{display:"flex",flexDirection:"column",gap:p.g||16,...(p.s||{})}}>{p.children}</div>;}
+function Btn(p){return <button onClick={p.onClick} style={{fontSize:10,padding:"5px 12px",borderRadius:7,border:"1px solid "+(p.active?p.ac+"44":K.border),background:p.active?p.ac+"0a":"#fff",color:p.active?p.ac:K.dim,cursor:"pointer",fontWeight:p.active?600:400,transition:"all .15s",whiteSpace:"nowrap",...(p.s||{})}}>{p.children}</button>;}
+function TblRow(p){var bg=p.sel?"#eef2ff":"#fafbfc";return <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:7,border:p.sel?"1px solid #c7d2fe":"1px solid #f3f4f6",background:bg,cursor:"pointer",transition:"all .15s",...(p.s||{})}} onClick={p.onClick} onMouseEnter={function(e){if(!p.sel)e.currentTarget.style.background="#f1f5f9";e.currentTarget.style.borderColor=p.sel?"#a5b4fc":"#e5e7eb";}} onMouseLeave={function(e){e.currentTarget.style.background=bg;e.currentTarget.style.borderColor=p.sel?"#c7d2fe":"#f3f4f6";}}>{p.children}</div>;}
+function DetailPanel(p){if(!p.open)return null;return <div><div onClick={p.onClose} style={{position:"fixed",top:0,left:0,width:"100vw",height:"100vh",background:"rgba(0,0,0,0.15)",zIndex:99}}/><div style={{position:"fixed",top:0,right:0,width:420,height:"100vh",background:"#fff",borderLeft:"1px solid "+K.border,boxShadow:"-8px 0 32px rgba(0,0,0,0.1)",zIndex:100,overflowY:"auto",padding:20}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}><span style={{fontSize:14,fontWeight:700,color:K.tx}}>{p.title}</span><button onClick={p.onClose} style={{background:"#f3f4f6",border:"none",cursor:"pointer",padding:6,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center"}}><X size={16} color={K.dim}/></button></div>{p.children}</div></div>;}
+function SubTab(p){return <div style={{display:"flex",gap:3,marginBottom:14,borderBottom:"1px solid #f1f3f5",paddingBottom:8}}>{p.tabs.map(function(t){return <Btn key={t} onClick={function(){p.onChange(t);}} active={p.active===t} ac={p.ac||K.blu}>{t}</Btn>;})}</div>;}
+function SearchBar(p){return <div style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",borderRadius:8,border:"1px solid "+K.border,background:"#fafbfc",flex:1,maxWidth:p.w||260}}><Search size={13} color={K.fnt}/><input value={p.value} onChange={function(e){p.onChange(e.target.value);}} placeholder={p.ph||"Search..."} style={{border:"none",background:"transparent",outline:"none",fontSize:11,color:K.tx,width:"100%"}}/>{p.value&&<button onClick={function(){p.onChange("");}} style={{background:"none",border:"none",cursor:"pointer",padding:0}}><X size={12} color={K.fnt}/></button>}</div>;}
+
+/* ═══════════════════ TAB 1: PROACTIVE ═══════════════════ */
+function ProactiveTab(){
+  var _s=useState(null),selBranch=_s[0],setSelBranch=_s[1];
+  var _g=useState(null),selGL=_g[0],setSelGL=_g[1];
+  var _q=useState(""),q=_q[0],setQ=_q[1];
+  var _st=useState("Heatmap"),sub=_st[0],setSub=_st[1];
+  var _df=useState("All"),domF=_df[0],setDomF=_df[1];
+  var sb=useMemo(function(){var f=branches.slice().sort(function(a,b){return b.risk-a.risk;});if(q){var ql=q.toLowerCase();f=f.filter(function(b){return b.name.toLowerCase().indexOf(ql)>=0||b.id.toLowerCase().indexOf(ql)>=0;});}return f;},[q]);
+  var tgl=useMemo(function(){var f=gls.slice().sort(function(a,b){return b.score-a.score;});if(domF!=="All")f=f.filter(function(g){return g.dom===domF;});return f;},[domF]);
+  var selB=selBranch?branches.find(function(b){return b.id===selBranch;}):null;
+  var selG=selGL?gls.find(function(g){return g.gl===selGL;}):null;
+  var openBranch=function(id){setSelGL(null);setSelBranch(id);};
+  var openGL=function(gl){setSelBranch(null);setSelGL(gl);};
+
+  return(
+    <F>
+      <G c="repeat(4,1fr)"><Kpi icon={Shield} l="Controls Auto-Tested" v="2,847" sub="of 4,120" tr={12} ac={K.grn}/><Kpi icon={Eye} l="Population Coverage" v="100%" sub="All GLs" tr={35} ac={K.blu}/><Kpi icon={TrendingUp} l="Pre-Visit Findings" v="73%" tr={18} ac={K.vio}/><Kpi icon={Zap} l="Risk Velocity" v="4.2h" sub="avg detection" tr={-42} ac={K.amb}/></G>
+
+      <SubTab tabs={["Heatmap","Branch Table","GL Explorer","Controls","Risk Trend"]} active={sub} onChange={setSub} ac={K.red}/>
+
+      {sub==="Heatmap"&&<Pnl>
+        <Hdr icon={Target} t="Branch Risk Heatmap" sub="Click any branch for details" ac={K.red} right={<SearchBar value={q} onChange={setQ} ph="Search branches..." w={200}/>}/>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:7}}>{sb.map(function(b){var c=b.risk>=80?K.red:b.risk>=60?K.amb:b.risk>=40?"#ca8a04":K.grn;return <div key={b.id} onClick={function(){openBranch(b.id);}} style={{borderRadius:9,padding:"9px 6px",border:selBranch===b.id?"2px solid "+K.blu:"1px solid #f1f3f5",textAlign:"center",background:c+"08",cursor:"pointer",transition:"all .2s"}} onMouseEnter={function(e){e.currentTarget.style.boxShadow="0 2px 8px rgba(0,0,0,0.06)";}} onMouseLeave={function(e){e.currentTarget.style.boxShadow="none";}}>
+          <div style={{fontSize:8,color:K.fnt,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{b.name}</div>
+          <div style={{fontSize:20,fontWeight:700,color:c,margin:"2px 0"}}>{b.risk}</div>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:3}}>{b.up?<ArrowUpRight size={8} color={K.red}/>:<ArrowDownRight size={8} color={K.grn}/>}<span style={{fontSize:7,color:K.fnt}}>{b.anom} anom</span></div>
+        </div>;})}</div>
+      </Pnl>}
+
+      {sub==="Branch Table"&&<Pnl>
+        <Hdr icon={Building2} t="Branch Risk Register" sub="All 20 branches with operational metrics" ac={K.blu} right={<SearchBar value={q} onChange={setQ} ph="Filter..." w={200}/>}/>
+        <div style={{overflowX:"auto"}}>
+          <div style={{display:"grid",gridTemplateColumns:"60px 1fr 70px 70px 80px 60px 70px 60px 70px",gap:0,fontSize:9,fontWeight:600,color:K.dim,padding:"0 10px 8px",borderBottom:"1px solid #f1f3f5"}}>
+            <span>ID</span><span>Branch</span><span>Risk</span><span>Region</span><span>Controls</span><span>Anom</span><span>Overrides</span><span>Staff</span><span>Last Audit</span>
+          </div>
+          <F g={3} s={{marginTop:6}}>{sb.map(function(b){var c=b.risk>=80?K.red:b.risk>=60?K.amb:K.grn;return <TblRow key={b.id} sel={selBranch===b.id} onClick={function(){openBranch(b.id);}}>
+            <div style={{display:"grid",gridTemplateColumns:"60px 1fr 70px 70px 80px 60px 70px 60px 70px",gap:0,width:"100%",alignItems:"center",fontSize:10}}>
+              <span style={{fontFamily:"monospace",color:K.fnt}}>{b.id}</span>
+              <span style={{fontWeight:600,color:K.tx}}>{b.name}</span>
+              <span style={{fontWeight:700,color:c}}>{b.risk}</span>
+              <span style={{color:K.dim}}>{b.region}</span>
+              <span><span style={{color:K.grn}}>{b.passCtrl}P</span> / <span style={{color:K.red}}>{b.failCtrl}F</span></span>
+              <span style={{color:b.anom>8?K.red:K.dim}}>{b.anom}</span>
+              <span style={{color:b.overrides>12?K.red:K.dim}}>{b.overrides}</span>
+              <span style={{color:K.dim}}>{b.staffCount}</span>
+              <span style={{color:K.fnt}}>{b.lastAudit}</span>
+            </div>
+          </TblRow>;})}</F>
+        </div>
+      </Pnl>}
+
+      {sub==="GL Explorer"&&<Pnl>
+        <Hdr icon={Database} t="GL Anomaly Explorer" sub="Click any GL for details" ac={K.amb} right={<div style={{display:"flex",gap:3}}>{["All"].concat(DOMS.slice(0,5)).map(function(d){return <Btn key={d} active={domF===d} ac={K.amb} onClick={function(){setDomF(d);}}>{d==="All"?"All":d.substring(0,8)}</Btn>;})}</div>}/>
+        <F g={4}>{tgl.map(function(g,i){return <TblRow key={g.gl} sel={selGL===g.gl} onClick={function(){openGL(g.gl);}}>
+          <span style={{fontSize:10,color:K.fnt,width:18,textAlign:"right"}}>{i+1}</span>
+          <div style={{flex:1,minWidth:0}}><div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}><span style={{fontSize:10,fontFamily:"monospace",color:K.dim}}>{g.gl}</span><span style={{fontSize:10,color:K.tx,fontWeight:500}}>{g.name}</span></div><Prog pct={g.score}/></div>
+          <div style={{textAlign:"right",marginRight:4}}><div style={{fontSize:14,fontWeight:700,color:K.tx}}>{g.score}</div><div style={{fontSize:7,color:K.fnt}}>{g.mje} MJE | {g.volume} vol</div></div>
+          <Bdg l={g.lvl} c={SC(g.lvl)}/>
+        </TblRow>;})}</F>
+      </Pnl>}
+
+      {sub==="Controls"&&<Pnl>
+        <Hdr icon={CheckCircle} t="Control Health Monitor" sub="Automated pass vs failures by domain" ac={K.grn}/>
+        <ResponsiveContainer width="100%" height={260}><BarChart data={ctrlD} barGap={2}><CartesianGrid strokeDasharray="3 3" stroke="#f1f3f5"/><XAxis dataKey="domain" tick={{fill:K.fnt,fontSize:7}} axisLine={false} tickLine={false} angle={-20} textAnchor="end" height={50}/><YAxis tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><Tooltip contentStyle={tt}/><Bar dataKey="auto" stackId="s" fill={K.grn} name="Pass"/><Bar dataKey="fail" stackId="s" fill={K.red} name="Fail" radius={[3,3,0,0]}/><Legend wrapperStyle={{fontSize:9,color:K.dim}}/></BarChart></ResponsiveContainer>
+        <G c="repeat(5,1fr)" s={{marginTop:12}}>{ctrlD.slice(0,5).map(function(c){return <div key={c.domain} style={{padding:10,borderRadius:8,border:"1px solid #f1f3f5",background:"#fafbfc"}}><div style={{fontSize:9,color:K.dim,marginBottom:4}}>{c.domain}</div><div style={{fontSize:18,fontWeight:700,color:c.eff>=80?K.grn:c.eff>=60?K.amb:K.red}}>{c.eff}%</div><div style={{fontSize:8,color:K.fnt}}>effectiveness</div><Prog pct={c.eff} h={3}/></div>;})}</G>
+      </Pnl>}
+
+      {sub==="Risk Trend"&&<Pnl>
+        <Hdr icon={TrendingUp} t="Predictive Risk Trend" sub="12-month risk score with coverage overlay" ac={K.vio}/>
+        <ResponsiveContainer width="100%" height={320}><AreaChart data={tsd}><defs><linearGradient id="grad_risk" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={K.vio} stopOpacity={0.15}/><stop offset="100%" stopColor={K.vio} stopOpacity={0}/></linearGradient><linearGradient id="grad_cov" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={K.grn} stopOpacity={0.1}/><stop offset="100%" stopColor={K.grn} stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke="#f1f3f5"/><XAxis dataKey="month" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><Tooltip contentStyle={tt}/><Area type="monotone" dataKey="risk" stroke={K.vio} fill="url(#grad_risk)" strokeWidth={2} name="Risk Score"/><Area type="monotone" dataKey="cov" stroke={K.grn} fill="url(#grad_cov)" strokeWidth={2} name="Coverage %"/><Legend wrapperStyle={{fontSize:9,color:K.dim}}/></AreaChart></ResponsiveContainer>
+      </Pnl>}
+
+      <DetailPanel open={!!selB} title={"Branch: "+((selB||{}).name||"")} onClose={function(){setSelBranch(null);}}>
+        {selB&&<F g={12}><div style={{padding:12,borderRadius:8,background:((selB.risk>=80?K.red:selB.risk>=60?K.amb:K.grn)+"08"),border:"1px solid "+((selB.risk>=80?K.red:selB.risk>=60?K.amb:K.grn)+"22")}}><div style={{fontSize:10,color:K.dim}}>Composite Risk Score</div><div style={{fontSize:32,fontWeight:700,color:selB.risk>=80?K.red:selB.risk>=60?K.amb:K.grn}}>{selB.risk}<span style={{fontSize:12,color:K.fnt}}> / 100</span></div></div>
+          <G c="1fr 1fr" g={8}>{[["Region",selB.region],["Staff",selB.staffCount],["Last Audit",selB.lastAudit],["Anomalies",selB.anom],["Controls Pass",selB.passCtrl],["Controls Fail",selB.failCtrl],["Cash Variance",selB.cashVar+"%"],["Overrides",selB.overrides]].map(function(r){return <div key={r[0]} style={{padding:8,borderRadius:6,background:"#f8f9fc"}}><div style={{fontSize:8,color:K.fnt}}>{r[0]}</div><div style={{fontSize:14,fontWeight:600,color:K.tx}}>{r[1]}</div></div>;})}</G>
+          <div style={{fontSize:11,fontWeight:600,color:K.tx,marginTop:4}}>Recommended Actions</div>
+          <F g={4}>{["Review high-frequency overrides","Investigate cash variance trend","Validate user access permissions","Schedule thematic audit visit","Update risk assessment"].map(function(a,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:K.tx2}}><CheckCircle size={12} color={i<2?K.grn:K.fnt}/>{a}</div>;})}</F>
+        </F>}
+      </DetailPanel>
+
+      <DetailPanel open={!!selG} title={"GL: "+((selG||{}).gl||"")+" - "+((selG||{}).name||"")} onClose={function(){setSelGL(null);}}>
+        {selG&&<F g={12}><div style={{padding:12,borderRadius:8,background:SC(selG.lvl)+"08",border:"1px solid "+SC(selG.lvl)+"22"}}><div style={{fontSize:10,color:K.dim}}>Anomaly Score</div><div style={{fontSize:32,fontWeight:700,color:SC(selG.lvl)}}>{selG.score}</div><Prog pct={selG.score}/></div>
+          <G c="1fr 1fr" g={8}>{[["Domain",selG.dom],["Risk Level",selG.lvl],["MJE Count",selG.mje],["Volume",selG.volume],["Recon Breaks",selG.reconBreaks],["Owner",selG.owner]].map(function(r){return <div key={r[0]} style={{padding:8,borderRadius:6,background:"#f8f9fc"}}><div style={{fontSize:8,color:K.fnt}}>{r[0]}</div><div style={{fontSize:13,fontWeight:600,color:K.tx}}>{r[1]}</div></div>;})}</G>
+        </F>}
+      </DetailPanel>
+    </F>
+  );
+}
+
+/* ═══════════════════ TAB 2: REACTIVE ═══════════════════ */
+function ReactiveTab(){
+  var _f=useState("All"),filter=_f[0],setFilter=_f[1];
+  var _sel=useState(null),selAlert=_sel[0],setSelAlert=_sel[1];
+  var _sub=useState("Alerts"),sub=_sub[0],setSub=_sub[1];
+  var _q=useState(""),q=_q[0],setQ=_q[1];
+  var sc=useMemo(function(){var m={Critical:0,High:0,Medium:0,Low:0};alerts.forEach(function(a){m[a.sev]++;});return m;},[]);
+  var list=useMemo(function(){var f=filter==="All"?alerts:alerts.filter(function(a){return a.sev===filter;});if(q){var ql=q.toLowerCase();f=f.filter(function(a){return a.title.toLowerCase().indexOf(ql)>=0||a.id.toLowerCase().indexOf(ql)>=0||a.dom.toLowerCase().indexOf(ql)>=0;});}return f;},[filter,q]);
+  var ss=[{name:"Open",value:alerts.filter(function(a){return a.stat==="Open";}).length,color:K.red},{name:"Investigating",value:alerts.filter(function(a){return a.stat==="Investigating";}).length,color:K.amb},{name:"Escalated",value:alerts.filter(function(a){return a.stat==="Escalated";}).length,color:K.org},{name:"Resolved",value:alerts.filter(function(a){return a.stat==="Resolved";}).length,color:K.grn}];
+  var selA=selAlert?alerts.find(function(a){return a.id===selAlert;}):null;
+
+  return(
+    <F>
+      <G c="repeat(4,1fr)"><Kpi icon={Bell} l="Active Alerts" v={alerts.filter(function(a){return a.stat!=="Resolved";}).length} ac={K.red}/><Kpi icon={Clock} l="Avg Resolution" v="6.4h" sub="target <8h" tr={-15} ac={K.amb}/><Kpi icon={AlertTriangle} l="Critical Open" v={sc.Critical} ac={K.ros}/><Kpi icon={CheckCircle} l="SLA Compliance" v="91%" tr={5} ac={K.grn}/></G>
+      <SubTab tabs={["Alerts","Investigation","Analytics"]} active={sub} onChange={setSub} ac={K.red}/>
+
+      {sub==="Alerts"&&<G c="2fr 1fr">
+        <Pnl>
+          <Hdr icon={Bell} t="Alert Command Center" ac={K.red} mb={8} right={<SearchBar value={q} onChange={setQ} ph="Search alerts..." w={200}/>}/>
+          <div style={{display:"flex",gap:3,marginBottom:10}}>{["All","Critical","High","Medium","Low"].map(function(s){return <Btn key={s} onClick={function(){setFilter(s);}} active={filter===s} ac={K.red}>{s}{s!=="All"?" ("+sc[s]+")":""}</Btn>;})}</div>
+          <div style={{maxHeight:420,overflowY:"auto",display:"flex",flexDirection:"column",gap:4}}>{list.map(function(a){return <TblRow key={a.id} sel={selAlert===a.id} onClick={function(){setSelAlert(a.id);}}>
+            <Dot c={StC(a.stat)}/><div style={{flex:1,minWidth:0}}><div style={{fontSize:11,color:K.tx,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontWeight:selAlert===a.id?600:400}}>{a.title}</div><div style={{display:"flex",alignItems:"center",gap:5,marginTop:2}}><span style={{fontSize:8,fontFamily:"monospace",color:K.fnt}}>{a.id}</span><span style={{fontSize:8,padding:"0 5px",borderRadius:3,background:"#f3f4f6",color:K.dim}}>{a.dom}</span><span style={{fontSize:8,color:K.fnt}}>{a.stat}</span></div></div>
+            <div style={{textAlign:"right",marginRight:6}}><div style={{fontSize:9,color:K.fnt}}>{a.age}h</div><div style={{fontSize:8,color:K.fnt}}>{a.team}</div></div><Bdg l={a.sev} c={SC(a.sev)}/>
+          </TblRow>;})}</div>
+        </Pnl>
+        <F g={12}>
+          <Pnl><Hdr icon={Activity} t="Status Distribution" ac={K.amb}/><ResponsiveContainer width="100%" height={160}><PieChart><Pie data={ss} cx="50%" cy="50%" innerRadius={42} outerRadius={68} dataKey="value" stroke="none">{ss.map(function(s,i){return <Cell key={i} fill={s.color}/>;})}</Pie><Tooltip contentStyle={tt}/></PieChart></ResponsiveContainer><div style={{display:"flex",justifyContent:"center",gap:8,flexWrap:"wrap",marginTop:4}}>{ss.map(function(s){return <div key={s.name} style={{display:"flex",alignItems:"center",gap:4}}><Dot c={s.color}/><span style={{fontSize:8,color:K.dim}}>{s.name} ({s.value})</span></div>;})}</div></Pnl>
+          <Pnl><Hdr icon={Search} t="RCA Summary" ac={K.cyn}/><F g={6}>{[{t:"Control Failure",p:32,c:K.red},{t:"Policy Violation",p:24,c:K.amb},{t:"Anomalous Pattern",p:44,c:K.vio}].map(function(r){return <div key={r.t}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:10,color:K.tx2}}>{r.t}</span><span style={{fontSize:12,fontWeight:700,color:r.c}}>{r.p}%</span></div><Prog pct={r.p} c={r.c} h={4}/></div>;})}</F></Pnl>
+        </F>
+      </G>}
+
+      {sub==="Investigation"&&<Pnl>
+        <Hdr icon={FileText} t="Investigation Workbench" sub="Select an alert to view full investigation details" ac={K.vio}/>
+        {selA?<G c="1fr 1fr" g={16}><div><div style={{fontSize:12,fontWeight:700,color:K.tx,marginBottom:8}}>{selA.title}</div><G c="1fr 1fr" g={6}>{[["Alert ID",selA.id],["Severity",selA.sev],["Status",selA.stat],["Domain",selA.dom],["Age",selA.age+"h"],["Team",selA.team],["Impact",selA.impact],["Created",selA.created]].map(function(r){return <div key={r[0]} style={{padding:8,borderRadius:6,background:"#f8f9fc"}}><div style={{fontSize:8,color:K.fnt}}>{r[0]}</div><div style={{fontSize:12,fontWeight:600,color:K.tx}}>{r[1]}</div></div>;})}</G><div style={{marginTop:12}}><div style={{fontSize:10,fontWeight:600,color:K.dim,marginBottom:6}}>Description</div><div style={{fontSize:11,color:K.tx2,lineHeight:1.6}}>{selA.desc}</div></div></div>
+          <div><div style={{fontSize:10,fontWeight:600,color:K.dim,marginBottom:8}}>Investigation Checklist</div><F g={6}>{selA.actions.map(function(a,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",borderRadius:7,border:"1px solid #f1f3f5",background:"#fafbfc"}}><CheckCircle size={14} color={i<2?K.grn:K.fnt}/><span style={{fontSize:10,color:i<2?K.tx:K.dim,textDecoration:i<2?"line-through":"none"}}>{a}</span></div>;})}</F><div style={{marginTop:12,padding:12,borderRadius:8,background:K.blu+"08",border:"1px solid "+K.blu+"22"}}><div style={{fontSize:10,fontWeight:600,color:K.blu,marginBottom:4}}>AI Recommendation</div><div style={{fontSize:10,color:K.tx2}}>Based on pattern analysis, this alert correlates with 3 similar incidents in {selA.dom}. Recommend reviewing access logs and recent policy changes.</div></div></div>
+        </G>:<div style={{padding:40,textAlign:"center",color:K.fnt}}><Search size={24} color={K.fnt2} style={{marginBottom:8}}/><div style={{fontSize:12}}>Select an alert from the Alerts tab to begin investigation</div></div>}
+      </Pnl>}
+
+      {sub==="Analytics"&&<G c="1fr 1fr"><Pnl><Hdr icon={BarChart3} t="Alert Volume Trend" ac={K.blu}/><ResponsiveContainer width="100%" height={240}><BarChart data={tsd}><CartesianGrid strokeDasharray="3 3" stroke="#f1f3f5"/><XAxis dataKey="month" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><Tooltip contentStyle={tt}/><Bar dataKey="findings" fill={K.blu} radius={[3,3,0,0]} name="Alerts"/></BarChart></ResponsiveContainer></Pnl>
+        <Pnl><Hdr icon={Layers} t="Domain Heatmap" ac={K.vio}/><F g={5}>{DOMS.map(function(d,i){var v=sd(i,2,8);return <div key={d} style={{display:"flex",alignItems:"center",gap:6}}><Dot c={DH[d]}/><span style={{fontSize:9,color:K.dim,width:100,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{d}</span><div style={{flex:1}}><Prog pct={v*12} c={DH[d]}/></div><span style={{fontSize:10,fontWeight:600,color:K.tx2,width:16,textAlign:"right"}}>{v}</span></div>;})}</F></Pnl>
+      </G>}
+
+      <DetailPanel open={!!selA&&sub==="Alerts"} title={"Alert: "+((selA||{}).id||"")} onClose={function(){setSelAlert(null);}}>
+        {selA&&<F g={10}><div style={{padding:10,borderRadius:8,background:SC(selA.sev)+"08"}}><div style={{fontSize:10,color:K.dim}}>Severity</div><div style={{fontSize:20,fontWeight:700,color:SC(selA.sev)}}>{selA.sev}</div></div>
+          <div style={{fontSize:12,fontWeight:600,color:K.tx}}>{selA.title}</div>
+          <div style={{fontSize:10,color:K.tx2,lineHeight:1.6}}>{selA.desc}</div>
+          <G c="1fr 1fr" g={6}>{[["Status",selA.stat],["Domain",selA.dom],["Age",selA.age+"h"],["Team",selA.team],["Impact",selA.impact],["Created",selA.created]].map(function(r){return <div key={r[0]} style={{padding:8,borderRadius:6,background:"#f8f9fc"}}><div style={{fontSize:8,color:K.fnt}}>{r[0]}</div><div style={{fontSize:12,fontWeight:600,color:K.tx}}>{r[1]}</div></div>;})}</G>
+          <div style={{fontSize:10,fontWeight:600,color:K.dim}}>Investigation Steps</div>
+          <F g={4}>{selA.actions.map(function(a,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:6,fontSize:10,color:K.tx2}}><div style={{width:18,height:18,borderRadius:4,border:"1.5px solid "+(i<2?K.grn:K.border),display:"flex",alignItems:"center",justifyContent:"center"}}>{i<2&&<CheckCircle size={12} color={K.grn}/>}</div>{a}</div>;})}</F>
+        </F>}
+      </DetailPanel>
+    </F>
+  );
+}
+
+/* ═══════════════════ TAB 3: FEEDBACK ═══════════════════ */
+function FeedbackTab(){
+  var _sub=useState("Trends"),sub=_sub[0],setSub=_sub[1];
+  var _selM=useState(null),selM=_selM[0],setSelM=_selM[1];
+  var selModel=selM!=null?models[selM]:null;
+  return(
+    <F>
+      <G c="repeat(4,1fr)"><Kpi icon={RotateCcw} l="Repeat Findings" v="12%" tr={-65} ac={K.grn}/><Kpi icon={RefreshCw} l="Model Retrains" v="14" sub="this quarter" tr={8} ac={K.vio}/><Kpi icon={Target} l="Remediation Rate" v="89%" tr={11} ac={K.blu}/><Kpi icon={GitBranch} l="Plan Updates" v="7" tr={22} ac={K.amb}/></G>
+      <SubTab tabs={["Trends","Models","Radar","Closed Loop"]} active={sub} onChange={setSub} ac={K.vio}/>
+
+      {sub==="Trends"&&<G c="1fr 1fr">
+        <Pnl><Hdr icon={BarChart3} t="Finding Trends" ac={K.blu}/><ResponsiveContainer width="100%" height={280}><BarChart data={tsd} barGap={2}><CartesianGrid strokeDasharray="3 3" stroke="#f1f3f5"/><XAxis dataKey="month" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><Tooltip contentStyle={tt}/><Bar dataKey="findings" fill={K.blu} radius={[2,2,0,0]} name="New"/><Bar dataKey="resolved" fill={K.grn} radius={[2,2,0,0]} name="Resolved"/><Bar dataKey="recurring" fill={K.red} radius={[2,2,0,0]} name="Recurring"/><Legend wrapperStyle={{fontSize:9,color:K.dim}}/></BarChart></ResponsiveContainer></Pnl>
+        <Pnl><Hdr icon={CheckCircle} t="Control Effectiveness" ac={K.grn}/><ResponsiveContainer width="100%" height={280}><BarChart data={ctrlD} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke="#f1f3f5"/><XAxis type="number" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false} domain={[0,100]}/><YAxis type="category" dataKey="domain" tick={{fill:K.dim,fontSize:8}} axisLine={false} tickLine={false} width={88}/><Tooltip contentStyle={tt}/><Bar dataKey="eff" fill={K.grn} radius={[0,4,4,0]} name="Effectiveness %"/></BarChart></ResponsiveContainer></Pnl>
+      </G>}
+
+      {sub==="Models"&&<Pnl>
+        <Hdr icon={Cpu} t="ML Model Registry" sub="Click any model for full details" ac={K.amb}/>
+        <div style={{display:"grid",gridTemplateColumns:"2fr 60px 60px 60px 60px 60px 70px 70px 50px",fontSize:9,fontWeight:600,color:K.dim,padding:"0 10px 8px",borderBottom:"1px solid #f1f3f5"}}><span>Model</span><span>Acc</span><span>Prec</span><span>Rec</span><span>F1</span><span>Drift</span><span>Type</span><span>Freq</span><span>Health</span></div>
+        <F g={3} s={{marginTop:6}}>{models.map(function(m,i){var hc=m.ok?K.grn:m.dr>0.04?K.red:K.amb;return <TblRow key={m.n} sel={selM===i} onClick={function(){setSelM(i);}}>
+          <div style={{display:"grid",gridTemplateColumns:"2fr 60px 60px 60px 60px 60px 70px 70px 50px",width:"100%",alignItems:"center",fontSize:10}}>
+            <span style={{fontWeight:600,color:K.tx}}>{m.n}</span>
+            <span>{m.acc}%</span><span>{m.pr}%</span><span>{m.rc}%</span><span>{m.f1}%</span>
+            <span style={{color:hc,fontWeight:600}}>{m.dr.toFixed(3)}</span>
+            <span style={{color:K.dim}}>{m.type}</span><span style={{color:K.dim}}>{m.freq}</span>
+            <Bdg l={m.ok?"OK":m.dr>0.04?"Warn":"Watch"} c={hc}/>
+          </div>
+        </TblRow>;})}</F>
+      </Pnl>}
+
+      {sub==="Radar"&&<Pnl><Hdr icon={Activity} t="Loop Performance Radar" ac={K.vio}/><ResponsiveContainer width="100%" height={340}><RadarChart data={radarD}><PolarGrid stroke="#e5e7eb"/><PolarAngleAxis dataKey="m" tick={{fill:K.dim,fontSize:9}}/><PolarRadiusAxis tick={{fill:K.fnt,fontSize:8}} domain={[0,100]}/><Radar name="Proactive" dataKey="p" stroke={K.grn} fill={K.grn} fillOpacity={0.1} strokeWidth={2}/><Radar name="Reactive" dataKey="r" stroke={K.red} fill={K.red} fillOpacity={0.06} strokeWidth={2}/><Radar name="Feedback" dataKey="f" stroke={K.vio} fill={K.vio} fillOpacity={0.08} strokeWidth={2}/><Legend wrapperStyle={{fontSize:9,color:K.dim}}/><Tooltip contentStyle={tt}/></RadarChart></ResponsiveContainer></Pnl>}
+
+      {sub==="Closed Loop"&&<Pnl><Hdr icon={RotateCcw} t="Closed-Loop Integration" ac={"#818cf8"}/><F g={8}>{[{fr:"Proactive",to:"Reactive",d:"Predictions trigger alerts at threshold breach",n:847,c:K.grn},{fr:"Reactive",to:"Feedback",d:"Resolution outcomes feed model retraining",n:623,c:K.red},{fr:"Feedback",to:"Proactive",d:"Updated models improve prediction accuracy",n:14,c:K.vio}].map(function(f){return <div key={f.d} style={{padding:12,borderRadius:9,border:"1px solid "+f.c+"18",background:f.c+"05"}}><div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}><span style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:5,background:f.c+"12",color:f.c}}>{f.fr}</span><ChevronRight size={11} color={K.fnt}/><span style={{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:5,background:f.c+"12",color:f.c}}>{f.to}</span><span style={{marginLeft:"auto",fontSize:12,fontWeight:700,color:K.dim}}>{f.n}</span></div><div style={{fontSize:9,color:K.dim}}>{f.d}</div></div>;})}</F></Pnl>}
+
+      <DetailPanel open={!!selModel} title={"Model: "+(selModel?selModel.n:"")} onClose={function(){setSelM(null);}}>
+        {selModel&&<F g={10}><div style={{padding:12,borderRadius:8,background:(selModel.ok?K.grn:K.amb)+"08"}}><div style={{display:"flex",justifyContent:"space-between"}}><div><div style={{fontSize:10,color:K.dim}}>Health</div><div style={{fontSize:20,fontWeight:700,color:selModel.ok?K.grn:K.amb}}>{selModel.ok?"Healthy":"Attention Needed"}</div></div><div style={{textAlign:"right"}}><div style={{fontSize:10,color:K.dim}}>Drift</div><div style={{fontSize:20,fontWeight:700,color:selModel.dr>0.03?K.red:K.grn}}>{selModel.dr.toFixed(3)}</div></div></div></div>
+          <G c="1fr 1fr" g={6}>{[["Type",selModel.type],["Domain",selModel.domain],["Frequency",selModel.freq],["Features",selModel.features],["Last Trained",selModel.lastTrain],["Version",selModel.ver],["Accuracy",selModel.acc+"%"],["F1 Score",selModel.f1+"%"]].map(function(r){return <div key={r[0]} style={{padding:8,borderRadius:6,background:"#f8f9fc"}}><div style={{fontSize:8,color:K.fnt}}>{r[0]}</div><div style={{fontSize:13,fontWeight:600,color:K.tx}}>{r[1]}</div></div>;})}</G>
+        </F>}
+      </DetailPanel>
+    </F>
+  );
+}
+
+/* ═══════════════════ TAB 4: OPERATIONAL ═══════════════════ */
+function OperationalTab(){
+  var _sub=useState("Credit"),sub=_sub[0],setSub=_sub[1];
+  return(
+    <F>
+      <SubTab tabs={["Credit","Fraud","AML","Intelligence Matrix"]} active={sub} onChange={setSub} ac={K.blu}/>
+
+      {sub==="Credit"&&<F>
+        <Pnl><Hdr icon={CreditCard} t="Credit Portfolio Overview" sub="Exposure, IFRS 9 staging, NPA rates by segment" ac={K.grn}/>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 80px 60px 60px 60px 60px 70px 70px",fontSize:9,fontWeight:600,color:K.dim,padding:"0 10px 8px",borderBottom:"1px solid #f1f3f5"}}><span>Segment</span><span>Exposure</span><span>Count</span><span>Avg</span><span>S1</span><span>S2</span><span>S3/NPA</span><span>Overdue</span></div>
+          <F g={3} s={{marginTop:6}}>{creditPortfolio.map(function(p){return <TblRow key={p.seg}><div style={{display:"grid",gridTemplateColumns:"1fr 80px 60px 60px 60px 60px 70px 70px",width:"100%",alignItems:"center",fontSize:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:3,height:20,borderRadius:2,background:p.color}}/><span style={{fontWeight:600,color:K.tx}}>{p.seg}</span></div>
+            <span style={{fontWeight:700}}>{(p.exp/1000).toFixed(1)}B</span><span style={{color:K.dim}}>{(p.count/1000).toFixed(1)}K</span><span style={{color:K.dim}}>{p.avg}</span>
+            <span style={{color:K.grn}}>{p.s1}%</span><span style={{color:K.amb}}>{p.s2}%</span><span style={{color:K.red}}>{p.s3}%/{p.npa}%</span><span style={{color:K.red}}>{(p.overdue/1000).toFixed(1)}K</span>
+          </div></TblRow>;})}</F>
+        </Pnl>
+        <Pnl><Hdr icon={TrendingDown} t="Delinquency Funnel" ac={K.red}/><ResponsiveContainer width="100%" height={260}><AreaChart data={delinquency}><defs><linearGradient id="grad_dpd" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={K.red} stopOpacity={0.12}/><stop offset="100%" stopColor={K.red} stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke="#f1f3f5"/><XAxis dataKey="month" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false} unit="%"/><Tooltip contentStyle={tt}/><Area type="monotone" dataKey="current" stroke={K.grn} fill={K.grn} fillOpacity={0.06} strokeWidth={2} name="Current"/><Area type="monotone" dataKey="dpd30" stroke={K.amb} fill={K.amb} fillOpacity={0.06} strokeWidth={1.5} name="30 DPD"/><Area type="monotone" dataKey="dpd90" stroke={K.red} fill="url(#grad_dpd)" strokeWidth={1.5} name="90+ DPD"/><Legend wrapperStyle={{fontSize:9,color:K.dim}}/></AreaChart></ResponsiveContainer></Pnl>
+      </F>}
+
+      {sub==="Fraud"&&<F>
+        <G c="repeat(5,1fr)">{[{l:"Total Cases",v:"798",ac:K.ros},{l:"Total Loss",v:"LKR 6.9M",ac:K.red},{l:"MTTD",v:"2.4min",ac:K.amb},{l:"MTTR",v:"18min",ac:K.blu},{l:"Avg FP Rate",v:"23%",ac:K.grn}].map(function(x){return <Kpi key={x.l} icon={Lock} l={x.l} v={x.v} ac={x.ac}/>;})}</G>
+        <Pnl><Hdr icon={Lock} t="Fraud by Channel" sub="Losses, cases, detection time, false positive rates" ac={K.ros}/>
+          <div style={{display:"grid",gridTemplateColumns:"80px 80px 60px 60px 60px 60px",fontSize:9,fontWeight:600,color:K.dim,padding:"0 10px 8px",borderBottom:"1px solid #f1f3f5"}}><span>Channel</span><span>Losses (LKR K)</span><span>Cases</span><span>FP Rate</span><span>MTTD</span><span>MTTR</span></div>
+          <F g={3} s={{marginTop:6}}>{fraudByChannel.map(function(f){return <TblRow key={f.channel}><div style={{display:"grid",gridTemplateColumns:"80px 80px 60px 60px 60px 60px",width:"100%",alignItems:"center",fontSize:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:5}}><Dot c={f.color}/><span style={{fontWeight:600}}>{f.channel}</span></div>
+            <span style={{fontWeight:700,color:K.red}}>{(f.losses/1000).toFixed(1)}M</span><span>{f.cases}</span>
+            <span style={{color:f.fpRate>25?K.red:K.grn}}>{f.fpRate}%</span><span style={{color:K.dim}}>{f.mttd}</span><span style={{color:K.dim}}>{f.mttr}</span>
+          </div></TblRow>;})}</F>
+        </Pnl>
+        <Pnl><Hdr icon={BarChart3} t="Fraud Loss by Channel" ac={K.org}/><ResponsiveContainer width="100%" height={200}><BarChart data={fraudByChannel} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke="#f1f3f5"/><XAxis type="number" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><YAxis type="category" dataKey="channel" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false} width={60}/><Tooltip contentStyle={tt}/><Bar dataKey="losses" radius={[0,4,4,0]} name="Losses">{fraudByChannel.map(function(f,i){return <Cell key={i} fill={f.color}/>;})}</Bar></BarChart></ResponsiveContainer></Pnl>
+      </F>}
+
+      {sub==="AML"&&<F>
+        <G c="repeat(3,1fr)">{amlOps.map(function(a){return <Pnl key={a.metric}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><span style={{fontSize:10,color:K.dim,fontWeight:500}}>{a.metric}</span>{a.warn?<AlertCircle size={12} color={K.amb}/>:<CheckCircle size={12} color={K.grn}/>}</div><div style={{fontSize:24,fontWeight:700,color:a.warn?K.amb:K.tx}}>{a.value}</div>{a.target&&<div style={{fontSize:8,color:K.fnt,marginTop:2}}>Target: {a.target}</div>}<div style={{display:"flex",alignItems:"center",gap:3,marginTop:4}}>{a.trend>0?<ArrowUpRight size={10} color={K.red}/>:<ArrowDownRight size={10} color={K.grn}/>}<span style={{fontSize:9,color:a.trend>0?K.red:K.grn}}>{Math.abs(a.trend)}% vs last month</span></div></Pnl>;})}</G>
+      </F>}
+
+      {sub==="Intelligence Matrix"&&<Pnl>
+        <Hdr icon={Bot} t="Risk Intelligence Matrix" sub="Capability status across 3 pillars" ac={K.cyn}/>
+        <G c="repeat(3,1fr)" g={12}>{[
+          {pillar:"Advanced Analytics",ic:Database,ac:K.blu,items:["ML Credit Scoring","Real-time Fraud Streaming","Delinquency EWS","Graph Analytics","Behavioral Collections","Dynamic Risk Scoring"],active:4},
+          {pillar:"GenAI & Agentic AI",ic:Bot,ac:K.vio,items:["Underwriting Copilots","Credit Memo GenAI","Fraud Simulation","SAR Drafting","Compliance Bot","Restructuring Agents"],active:3},
+          {pillar:"Digital Tooling",ic:Workflow,ac:K.grn,items:["Credit Platform","Fraud Platform","Compliance Workbench","OCR Pipeline","Self-Service Portal","Dashboards"],active:5},
+        ].map(function(p){var I=p.ic;return <div key={p.pillar} style={{padding:14,borderRadius:10,border:"1px solid "+p.ac+"18",background:p.ac+"04"}}><div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}><div style={{padding:6,borderRadius:7,background:p.ac+"10"}}><I size={14} color={p.ac}/></div><div><div style={{fontSize:11,fontWeight:700,color:K.tx}}>{p.pillar}</div><div style={{fontSize:8,color:K.fnt}}>{p.active}/{p.items.length} active</div></div></div><Prog pct={Math.round(p.active/p.items.length*100)} c={p.ac} h={4}/><F g={4} s={{marginTop:8}}>{p.items.map(function(item,i){var on=i<p.active;return <div key={item} style={{display:"flex",alignItems:"center",gap:6}}>{on?<CheckCircle size={11} color={p.ac}/>:<div style={{width:11,height:11,borderRadius:999,border:"1.5px solid #d1d5db"}}/>}<span style={{fontSize:9,color:on?K.tx:K.fnt}}>{item}</span></div>;})}</F></div>;})}</G>
+      </Pnl>}
+    </F>
+  );
+}
+
+/* ═══════════════════ TAB 5: EXECUTIVE ═══════════════════ */
+function ExecutiveTab(){
+  var _sub=useState("Overview"),sub=_sub[0],setSub=_sub[1];
+  var _selCat=useState(null),selCat=_selCat[0],setSelCat=_selCat[1];
+  var tExp=creditPortfolio.reduce(function(s,p){return s+p.exp;},0);
+  var oFin=auditCov.reduce(function(s,a){return s+a.fin;},0);
+  var avgCv=Math.round(auditCov.reduce(function(s,a){return s+a.cov;},0)/auditCov.length);
+  var selGP=selCat!=null?globalProducts[selCat]:null;
+
+  return(
+    <F>
+      <G c="repeat(5,1fr)"><Kpi icon={Gauge} l="Enterprise Risk" v="62" sub="/100 moderate" ac={K.amb}/><Kpi icon={DollarSign} l="Exposure" v={"LKR "+Math.round(tExp/1000)+"B"} ac={K.blu}/><Kpi icon={ShieldCheck} l="Audit Coverage" v={avgCv+"%"} tr={8} ac={K.grn}/><Kpi icon={AlertCircle} l="Open Findings" v={oFin} tr={-12} ac={K.red}/><Kpi icon={Award} l="Automation" v="68%" tr={22} ac={K.vio}/></G>
+      <SubTab tabs={["Overview","Regulatory","Risk Appetite","AI ROI","Global AI Products"]} active={sub} onChange={setSub} ac={K.amb}/>
+
+      {sub==="Overview"&&<G c="1fr 1fr">
+        <Pnl><Hdr icon={Shield} t="Audit Universe Coverage" ac={K.grn}/>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 50px 40px 40px 40px",fontSize:9,fontWeight:600,color:K.dim,padding:"0 10px 6px",borderBottom:"1px solid #f1f3f5"}}><span>Domain</span><span>Covered</span><span>Find</span><span>High</span><span>Open</span></div>
+          <F g={3} s={{marginTop:6}}>{auditCov.map(function(a){return <TblRow key={a.domain}><div style={{display:"grid",gridTemplateColumns:"1fr 50px 40px 40px 40px",width:"100%",alignItems:"center",fontSize:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:5}}><Dot c={DH[a.domain]||K.dim}/><span style={{fontWeight:500}}>{a.domain}</span></div>
+            <span style={{fontWeight:700,color:a.cov<75?K.amb:K.grn}}>{a.cov}%</span>
+            <span>{a.fin}</span><span style={{color:a.high>3?K.red:K.dim}}>{a.high}</span><span style={{color:a.open>5?K.amb:K.dim}}>{a.open}</span>
+          </div></TblRow>;})}</F>
+        </Pnl>
+        <Pnl><Hdr icon={BarChart3} t="Strategic Capability Status" ac={K.vio}/>
+          <F g={8}>{[{t:"Credit Risk Intelligence",st:"4/6 live",pct:67,c:K.grn},{t:"Fraud Intelligence",st:"3/5 live",pct:60,c:K.ros},{t:"AML & Compliance",st:"2/6 live",pct:33,c:K.indigo},{t:"IT & OpRisk AI",st:"4/10 live",pct:40,c:K.cyn},{t:"Audit Documentation AI",st:"3/7 live",pct:43,c:K.org},{t:"Next-Gen Emerging",st:"1/8 live",pct:13,c:K.pnk}].map(function(s){return <div key={s.t}><div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:10,color:K.tx}}>{s.t}</span><span style={{fontSize:9,fontWeight:600,color:s.c}}>{s.st}</span></div><Prog pct={s.pct} c={s.c} h={5}/></div>;})}</F>
+        </Pnl>
+      </G>}
+
+      {sub==="Regulatory"&&<Pnl><Hdr icon={Landmark} t="Regulatory Capital & Liquidity" sub="CAR, LCR, NSFR with minimums" ac={K.blu}/><ResponsiveContainer width="100%" height={320}><ComposedChart data={regRatios}><CartesianGrid strokeDasharray="3 3" stroke="#f1f3f5"/><XAxis dataKey="month" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><YAxis yAxisId="left" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false} domain={[10,18]} unit="%"/><YAxis yAxisId="right" orientation="right" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false} domain={[90,140]} unit="%"/><Tooltip contentStyle={tt}/><Line yAxisId="left" type="monotone" dataKey="car" stroke={K.blu} strokeWidth={2} name="CAR %" dot={false}/><Line yAxisId="left" type="monotone" dataKey="min_car" stroke={K.blu} strokeWidth={1} strokeDasharray="6 3" name="CAR Min" dot={false}/><Line yAxisId="right" type="monotone" dataKey="lcr" stroke={K.grn} strokeWidth={2} name="LCR %" dot={false}/><Line yAxisId="right" type="monotone" dataKey="min_lcr" stroke={K.grn} strokeWidth={1} strokeDasharray="6 3" name="LCR Min" dot={false}/><Line yAxisId="right" type="monotone" dataKey="nsfr" stroke={K.vio} strokeWidth={2} name="NSFR %" dot={false}/><Legend wrapperStyle={{fontSize:9,color:K.dim}}/></ComposedChart></ResponsiveContainer></Pnl>}
+
+      {sub==="Risk Appetite"&&<Pnl><Hdr icon={Target} t="Risk Appetite Utilization" ac={K.amb}/><G c="1fr 1fr" g={12}><F g={10}>{riskAppetite.map(function(r){var pct=Math.round(r.actual/r.limit*100);var bad=pct>=90;return <div key={r.metric}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:11,color:K.tx}}>{r.metric}</span><span style={{fontSize:11,fontWeight:700,color:bad?K.red:r.color}}>{r.actual} / {r.limit}</span></div><div style={{width:"100%",height:8,borderRadius:999,background:"#f1f3f5"}}><div style={{width:pct+"%",height:8,borderRadius:999,background:bad?K.red:r.color}}/></div><div style={{display:"flex",justifyContent:"space-between",marginTop:2}}><span style={{fontSize:8,color:K.fnt}}>{pct}% utilized</span>{bad&&<span style={{fontSize:8,color:K.red,fontWeight:700}}>NEAR LIMIT</span>}</div></div>;})}</F>
+        <ResponsiveContainer width="100%" height={280}><RadarChart data={riskAppetite.map(function(r){return{m:r.metric.substring(0,10),actual:Math.round(r.actual/r.limit*100)};})}>
+          <PolarGrid stroke="#e5e7eb"/><PolarAngleAxis dataKey="m" tick={{fill:K.dim,fontSize:8}}/><PolarRadiusAxis tick={{fill:K.fnt,fontSize:7}} domain={[0,100]}/><Radar dataKey="actual" stroke={K.amb} fill={K.amb} fillOpacity={0.15} strokeWidth={2}/><Tooltip contentStyle={tt}/>
+        </RadarChart></ResponsiveContainer></G></Pnl>}
+
+      {sub==="AI ROI"&&<Pnl><Hdr icon={Bot} t="AI & Analytics ROI Trajectory" ac={K.cyn}/><ResponsiveContainer width="100%" height={320}><ComposedChart data={aiROI}><defs><linearGradient id="grad_sav" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={K.grn} stopOpacity={0.15}/><stop offset="100%" stopColor={K.grn} stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="3 3" stroke="#f1f3f5"/><XAxis dataKey="month" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><YAxis tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/><Tooltip contentStyle={tt}/><Area type="monotone" dataKey="savings" stroke={K.grn} fill="url(#grad_sav)" strokeWidth={2} name="Savings (M)"/><Line type="monotone" dataKey="autoRate" stroke={K.vio} strokeWidth={2} name="Automation %" dot={false}/><Line type="monotone" dataKey="detection" stroke={K.blu} strokeWidth={2} name="Detection %" dot={false}/><Line type="monotone" dataKey="manual" stroke={K.red} strokeWidth={1.5} strokeDasharray="4 3" name="Manual %" dot={false}/><Legend wrapperStyle={{fontSize:9,color:K.dim}}/></ComposedChart></ResponsiveContainer></Pnl>}
+
+      {sub==="Global AI Products"&&<F>
+        <Pnl><Hdr icon={Globe} t="Global AI Audit Product Catalogue" sub={"70+ products across 8 categories \u2014 click any category for full details"} ac={K.sky}/>
+          <G c="repeat(4,1fr)" g={10}>{globalProducts.map(function(gp,gi){return <div key={gp.cat} onClick={function(){setSelCat(gi);}} style={{padding:14,borderRadius:10,border:selCat===gi?"2px solid "+gp.color:"1px solid "+gp.color+"18",background:gp.color+"04",cursor:"pointer",transition:"all .2s"}} onMouseEnter={function(e){e.currentTarget.style.boxShadow="0 3px 12px rgba(0,0,0,0.06)";}} onMouseLeave={function(e){e.currentTarget.style.boxShadow="none";}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}><div style={{fontSize:11,fontWeight:700,color:K.tx}}>{gp.cat}</div><div style={{fontSize:20,fontWeight:700,color:gp.color}}>{gp.ct}</div></div>
+            <div style={{fontSize:8,color:K.fnt,marginBottom:6}}>{gp.banks}</div>
+            <Prog pct={Math.round(gp.items.filter(function(x){return x.status==="Live";}).length/gp.ct*100)} c={gp.color} h={4}/>
+            <div style={{fontSize:8,color:K.dim,marginTop:4}}>{gp.items.filter(function(x){return x.status==="Live";}).length} live / {gp.items.filter(function(x){return x.status==="Pilot";}).length} pilot / {gp.items.filter(function(x){return x.status==="R&D";}).length} R&D</div>
+          </div>;})}</G>
+        </Pnl>
+        {selGP&&<Pnl>
+          <Hdr icon={BookOpen} t={selGP.cat+" \u2014 Detailed Product Catalogue"} sub={selGP.banks} ac={selGP.color}/>
+          <div style={{display:"grid",gridTemplateColumns:"2fr 100px 50px 3fr",fontSize:9,fontWeight:600,color:K.dim,padding:"0 10px 8px",borderBottom:"1px solid #f1f3f5"}}><span>Product</span><span>Bank(s)</span><span>Status</span><span>Impact / Description</span></div>
+          <F g={4} s={{marginTop:6}}>{selGP.items.map(function(item){var sc=item.status==="Live"?K.grn:item.status==="Pilot"?K.amb:K.vio;return <TblRow key={item.n}><div style={{display:"grid",gridTemplateColumns:"2fr 100px 50px 3fr",width:"100%",alignItems:"center",fontSize:10,gap:8}}>
+            <span style={{fontWeight:600,color:K.tx}}>{item.n}</span>
+            <span style={{color:K.dim,fontSize:9}}>{item.bank}</span>
+            <Bdg l={item.status} c={sc}/>
+            <span style={{color:K.tx2,fontSize:9}}>{item.impact}</span>
+          </div></TblRow>;})}</F>
+        </Pnl>}
+      </F>}
+    </F>
+  );
+}
+
+/* ═══════════════════ TAB 6: GL & MJE AUDIT ═══════════════════ */
+
+// MJE Journal Entry data — full population testing
+var mjeEntries=[
+  {id:"MJE-4201",gl:"1200",glName:"Loans Receivable",amount:500000,user:"R.Fernando",dept:"Finance",date:"2026-03-11",time:"22:45",day:"Wed",riskScore:92,flags:["After-hours","Round number","Unusual GL"],status:"Flagged",benford:"Fail",type:"Manual"},
+  {id:"MJE-4202",gl:"1050",glName:"Suspense Account",amount:247830,user:"K.Perera",dept:"Operations",date:"2026-03-11",time:"09:15",day:"Tue",riskScore:78,flags:["Suspense >7d","High amount"],status:"Under Review",benford:"Pass",type:"Manual"},
+  {id:"MJE-4203",gl:"3100",glName:"Interest Income",amount:100000,user:"S.Silva",dept:"Treasury",date:"2026-03-10",time:"23:58",day:"Mon",riskScore:88,flags:["After-hours","Round number","Credit to income"],status:"Flagged",benford:"Fail",type:"Manual"},
+  {id:"MJE-4204",gl:"2400",glName:"Accrued Expenses",amount:89450,user:"M.Kumar",dept:"Finance",date:"2026-03-10",time:"14:30",day:"Mon",riskScore:35,flags:[],status:"Cleared",benford:"Pass",type:"Auto"},
+  {id:"MJE-4205",gl:"1800",glName:"Intercompany",amount:1200000,user:"D.Jayawardena",dept:"Finance",date:"2026-03-09",time:"08:10",day:"Sun",riskScore:95,flags:["Weekend posting","Round number","Intercompany","High amount"],status:"Escalated",benford:"Fail",type:"Manual"},
+  {id:"MJE-4206",gl:"4200",glName:"Fee Income",amount:50000,user:"R.Fernando",dept:"Finance",date:"2026-03-09",time:"21:30",day:"Sun",riskScore:85,flags:["Weekend posting","Round number","Same user"],status:"Flagged",benford:"Fail",type:"Manual"},
+  {id:"MJE-4207",gl:"1100",glName:"Cash & Equivalents",amount:325670,user:"A.Bandara",dept:"Operations",date:"2026-03-08",time:"10:45",day:"Sat",riskScore:72,flags:["Weekend posting"],status:"Under Review",benford:"Pass",type:"Manual"},
+  {id:"MJE-4208",gl:"2600",glName:"Deferred Revenue",amount:67890,user:"P.Gunaratne",dept:"Finance",date:"2026-03-08",time:"11:20",day:"Fri",riskScore:28,flags:[],status:"Cleared",benford:"Pass",type:"Auto"},
+  {id:"MJE-4209",gl:"5100",glName:"Staff Costs",amount:200000,user:"N.Wijesinghe",dept:"HR",date:"2026-03-07",time:"16:00",day:"Thu",riskScore:68,flags:["Round number","Unusual dept-GL"],status:"Under Review",benford:"Fail",type:"Manual"},
+  {id:"MJE-4210",gl:"3200",glName:"Provision for Losses",amount:450000,user:"S.Silva",dept:"Risk",date:"2026-03-07",time:"23:10",day:"Thu",riskScore:82,flags:["After-hours","Round number","High amount"],status:"Flagged",benford:"Fail",type:"Manual"},
+  {id:"MJE-4211",gl:"1300",glName:"Trade Finance",amount:178250,user:"T.Rajapaksa",dept:"Trade",date:"2026-03-06",time:"09:30",day:"Wed",riskScore:22,flags:[],status:"Cleared",benford:"Pass",type:"Auto"},
+  {id:"MJE-4212",gl:"2100",glName:"Capital Reserve",amount:1000000,user:"D.Jayawardena",dept:"Finance",date:"2026-03-06",time:"00:15",day:"Wed",riskScore:97,flags:["Midnight posting","Round number","Capital account","High amount"],status:"Escalated",benford:"Fail",type:"Manual"},
+];
+
+// GL Reconciliation data
+var glRecons=[
+  {gl:"1050",name:"Suspense Account",subLedger:24567890,glBal:24892340,breakAmt:324450,breakPct:1.32,age:"14d",status:"Open",owner:"Operations",priority:"Critical"},
+  {gl:"1200",name:"Loans Receivable",subLedger:8945000000,glBal:8945000000,breakAmt:0,breakPct:0,age:"-",status:"Matched",owner:"Credit",priority:"Low"},
+  {gl:"1800",name:"Intercompany",subLedger:567230000,glBal:568450000,breakAmt:1220000,breakPct:0.22,age:"7d",status:"Investigating",owner:"Finance",priority:"High"},
+  {gl:"2400",name:"Accrued Expenses",subLedger:156780000,glBal:156812000,breakAmt:32000,breakPct:0.02,age:"3d",status:"Open",owner:"Finance",priority:"Medium"},
+  {gl:"3100",name:"Interest Income",subLedger:432100000,glBal:432100000,breakAmt:0,breakPct:0,age:"-",status:"Matched",owner:"Treasury",priority:"Low"},
+  {gl:"4200",name:"Fee Income",subLedger:89560000,glBal:89780000,breakAmt:220000,breakPct:0.25,age:"5d",status:"Open",owner:"Finance",priority:"High"},
+  {gl:"1100",name:"Cash & Equivalents",subLedger:2345000000,glBal:2345120000,breakAmt:120000,breakPct:0.005,age:"1d",status:"Under Review",owner:"Treasury",priority:"Medium"},
+  {gl:"5100",name:"Staff Costs",subLedger:234500000,glBal:234500000,breakAmt:0,breakPct:0,age:"-",status:"Matched",owner:"HR",priority:"Low"},
+];
+
+// Benford's Law distribution for MJE first digits
+var benfordExpected=[30.1,17.6,12.5,9.7,7.9,6.7,5.8,5.1,4.6];
+var benfordActual=[22.4,14.8,11.2,9.1,8.2,7.5,6.1,5.9,14.8];
+var benfordData=benfordExpected.map(function(e,i){return{digit:String(i+1),expected:e,actual:benfordActual[i],deviation:Math.abs(benfordActual[i]-e).toFixed(1)};});
+
+// MJE Who/When/What analysis
+var mjeByUser=[
+  {user:"D.Jayawardena",dept:"Finance",entries:48,highRisk:12,avgScore:74,flags:["Midnight posts","Intercompany access","Capital GL access"]},
+  {user:"R.Fernando",dept:"Finance",entries:35,highRisk:8,avgScore:65,flags:["After-hours","Repeated round-number"]},
+  {user:"S.Silva",dept:"Treasury",entries:42,highRisk:6,avgScore:58,flags:["After-hours","Income GL access"]},
+  {user:"K.Perera",dept:"Operations",entries:28,highRisk:4,avgScore:48,flags:["Suspense account frequent"]},
+  {user:"M.Kumar",dept:"Finance",entries:52,highRisk:2,avgScore:32,flags:[]},
+  {user:"A.Bandara",dept:"Operations",entries:31,highRisk:3,avgScore:41,flags:["Weekend posts"]},
+];
+
+var mjeByTiming=MO.map(function(m,i){return{month:m,businessHrs:80+sd(i,0,15),afterHrs:8+sd(i,0,6),weekends:3+sd(i,0,4),holidays:1+sd(i,0,2)};});
+
+// Agentic AI Resolution tracking
+var agentCases=[
+  {id:"AGT-001",type:"GL Balance Mismatch",gl:"1050",status:"Resolved",action:"Agent retrieved 3 invoices, identified timing difference, proposed adjusting entry",resolution:"Auto-adjusted",time:"4min",confidence:94},
+  {id:"AGT-002",type:"GL Balance Mismatch",gl:"1800",status:"In Progress",action:"Agent analyzing intercompany transaction chain across 4 entities",resolution:"Pending",time:"12min",confidence:78},
+  {id:"AGT-003",type:"Unreconciled Break",gl:"4200",status:"Resolved",action:"Agent found duplicate fee posting, reversed duplicate entry",resolution:"Auto-reversed",time:"2min",confidence:98},
+  {id:"AGT-004",type:"Missing Control Evidence",gl:"2400",status:"Resolved",action:"Agent extracted approval emails from mailbox, linked to journal entry",resolution:"Evidence attached",time:"8min",confidence:91},
+  {id:"AGT-005",type:"GL Balance Mismatch",gl:"1100",status:"Escalated",action:"Agent unable to resolve — flagged unusual pattern requiring human judgment",resolution:"Escalated to audit",time:"15min",confidence:42},
+  {id:"AGT-006",type:"Suspense Aging",gl:"1050",status:"Resolved",action:"Agent traced 14-day old suspense to unprocessed customer payment, cleared",resolution:"Auto-cleared",time:"6min",confidence:96},
+];
+
+// 4-step audit universe pipeline
+var auditPipeline=[
+  {step:1,title:"Scope & Map",desc:"Define full audit coverage — all products, all processes, all GL movements",objective:"Full audit universe definition",anomalies:["Incorrect product-GL mappings","Unusual account pairings","Missing/outdated control mappings"],analytics:["Pattern recognition on GL linkages","Clustering for mapping inconsistencies","Duplicate detection"],genai:["Auto-extract policies/COA/SOP into audit maps","AI-generated GL mapping explanations","NL identification of missing controls"],status:92,items:5200},
+  {step:2,title:"Extract & Reconcile",desc:"Achieve 100% GL assurance — no sampling, no blind spots",objective:"End-to-end GL data validation",anomalies:["Reconciliation breaks (sub-ledger vs GL)","Volume mismatches across systems","Timing misalignments"],analytics:["ML-based reconciliation engines","Time-series anomaly detection","Automated matching algorithms"],genai:["Auto-generated reconciliation summaries","GenAI reasoning for mismatches & root causes","Unstructured doc extraction for support"],status:78,items:5200},
+  {step:3,title:"Detect Irregularities",desc:"Identify hidden risks in operational behaviour, controls, and journals",objective:"Control failure & transaction anomaly detection",anomalies:["High manual postings / suspense usage","After-hours/holiday postings","Unusual reversals or fee adjustments"],analytics:["Isolation Forest / Autoencoders","Behavioral analytics on overrides","Benford's Law on entry amounts"],genai:["Explainable AI narratives (why anomalous)","Auto root-cause summaries","Journal description interpretation"],status:68,items:5200},
+  {step:4,title:"Score & Prioritize",desc:"Convert GL anomalies + product risks into dynamic, predictive audit planning",objective:"Risk-based audit prioritization",anomalies:["High-risk GLs and accounts","High-risk branches/products/processes","Recurring control breakdown patterns"],analytics:["Predictive risk scoring (GL, branch, product)","Heatmap generation for prioritization","Trend detection for emerging risk"],genai:["GenAI audit planning assistant","Automated working papers & narratives","Dynamic audit plan generation"],status:55,items:5200},
+];
+
+function GLAuditTab(){
+  var _sub=useState("MJE Testing"),sub=_sub[0],setSub=_sub[1];
+  var _selMje=useState(null),selMje=_selMje[0],setSelMje=_selMje[1];
+  var _mjeFilter=useState("All"),mjeF=_mjeFilter[0],setMjeF=_mjeFilter[1];
+  var _q=useState(""),q=_q[0],setQ=_q[1];
+
+  var filteredMJE=useMemo(function(){
+    var f=mjeEntries;
+    if(mjeF==="Flagged")f=f.filter(function(m){return m.status==="Flagged"||m.status==="Escalated";});
+    if(mjeF==="High Risk")f=f.filter(function(m){return m.riskScore>=70;});
+    if(mjeF==="Cleared")f=f.filter(function(m){return m.status==="Cleared";});
+    if(q){var ql=q.toLowerCase();f=f.filter(function(m){return m.id.toLowerCase().indexOf(ql)>=0||m.user.toLowerCase().indexOf(ql)>=0||m.glName.toLowerCase().indexOf(ql)>=0;});}
+    return f;
+  },[mjeF,q]);
+
+  var selEntry=selMje?mjeEntries.find(function(m){return m.id===selMje;}):null;
+
+  var mjeStats={
+    total:mjeEntries.length,
+    flagged:mjeEntries.filter(function(m){return m.status==="Flagged";}).length,
+    escalated:mjeEntries.filter(function(m){return m.status==="Escalated";}).length,
+    highRisk:mjeEntries.filter(function(m){return m.riskScore>=70;}).length,
+    benfordFail:mjeEntries.filter(function(m){return m.benford==="Fail";}).length,
+    avgScore:Math.round(mjeEntries.reduce(function(s,m){return s+m.riskScore;},0)/mjeEntries.length),
+  };
+
+  return(
+    <F>
+      <G c="repeat(6,1fr)">
+        <Kpi icon={FileText} l="Total MJEs Tested" v={mjeStats.total} sub="100% population" ac={K.blu}/>
+        <Kpi icon={AlertTriangle} l="Flagged" v={mjeStats.flagged} sub="require review" ac={K.amb}/>
+        <Kpi icon={AlertCircle} l="Escalated" v={mjeStats.escalated} sub="critical anomalies" ac={K.red}/>
+        <Kpi icon={Zap} l="High Risk (70+)" v={mjeStats.highRisk} ac={K.ros}/>
+        <Kpi icon={BarChart3} l="Benford Failures" v={mjeStats.benfordFail} ac={K.vio}/>
+        <Kpi icon={Gauge} l="Avg Risk Score" v={mjeStats.avgScore+"/100"} ac={K.amb}/>
+      </G>
+
+      <SubTab tabs={["MJE Testing","Benford Analysis","Who/When/What","GL Reconciliation","Agentic AI","Audit Pipeline"]} active={sub} onChange={setSub} ac={K.indigo}/>
+
+      {/* ─── MJE TESTING ─── */}
+      {sub==="MJE Testing"&&<F>
+        <Pnl>
+          <Hdr icon={FileText} t="Manual Journal Entry Testing — Full Population" sub="Every MJE scored in real-time. Click any entry for details." ac={K.indigo} right={<SearchBar value={q} onChange={setQ} ph="Search entries..." w={200}/>}/>
+          <div style={{display:"flex",gap:3,marginBottom:10}}>
+            {["All","Flagged","High Risk","Cleared"].map(function(f){return <Btn key={f} active={mjeF===f} ac={K.indigo} onClick={function(){setMjeF(f);}}>{f}</Btn>;})}
+          </div>
+          <div style={{overflowX:"auto"}}>
+            <div style={{display:"grid",gridTemplateColumns:"70px 50px 120px 90px 70px 70px 70px 60px 70px 80px",fontSize:9,fontWeight:600,color:K.dim,padding:"0 10px 8px",borderBottom:"1px solid #f1f3f5",minWidth:800}}>
+              <span>Entry ID</span><span>GL</span><span>GL Name</span><span>Amount</span><span>User</span><span>Date</span><span>Time</span><span>Score</span><span>Benford</span><span>Status</span>
+            </div>
+            <F g={3} s={{marginTop:6}}>
+              {filteredMJE.map(function(m){
+                var sc=m.riskScore>=80?K.red:m.riskScore>=60?K.amb:m.riskScore>=40?"#ca8a04":K.grn;
+                var stc=m.status==="Flagged"?K.amb:m.status==="Escalated"?K.red:m.status==="Under Review"?K.blu:K.grn;
+                return <TblRow key={m.id} sel={selMje===m.id} onClick={function(){setSelMje(m.id);}}>
+                  <div style={{display:"grid",gridTemplateColumns:"70px 50px 120px 90px 70px 70px 70px 60px 70px 80px",width:"100%",alignItems:"center",fontSize:10,minWidth:800}}>
+                    <span style={{fontFamily:"monospace",color:K.dim,fontWeight:600}}>{m.id}</span>
+                    <span style={{fontFamily:"monospace",color:K.fnt}}>{m.gl}</span>
+                    <span style={{fontWeight:500,color:K.tx,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.glName}</span>
+                    <span style={{fontWeight:700,color:K.tx}}>LKR {(m.amount/1000).toFixed(0)}K</span>
+                    <span style={{color:K.dim}}>{m.user}</span>
+                    <span style={{color:K.fnt,fontSize:9}}>{m.date.substring(5)}</span>
+                    <span style={{color:m.flags.some(function(f){return f.indexOf("After")>=0||f.indexOf("Weekend")>=0||f.indexOf("Midnight")>=0;})?K.red:K.dim,fontWeight:m.flags.length>0?600:400}}>{m.time}</span>
+                    <span style={{fontWeight:700,color:sc}}>{m.riskScore}</span>
+                    <Bdg l={m.benford} c={m.benford==="Fail"?K.red:K.grn}/>
+                    <Bdg l={m.status} c={stc}/>
+                  </div>
+                </TblRow>;
+              })}
+            </F>
+          </div>
+        </Pnl>
+      </F>}
+
+      {/* ─── BENFORD ANALYSIS ─── */}
+      {sub==="Benford Analysis"&&<F>
+        <Pnl>
+          <Hdr icon={BarChart3} t={"Benford\u2019s Law Analysis — First Digit Distribution"} sub="Expected vs actual distribution of leading digits in MJE amounts. Significant deviations indicate potential manipulation." ac={K.vio}/>
+          <ResponsiveContainer width="100%" height={300}>
+            <ComposedChart data={benfordData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f3f5"/>
+              <XAxis dataKey="digit" tick={{fill:K.dim,fontSize:11}} axisLine={false} tickLine={false} label={{value:"First Digit",position:"bottom",fill:K.fnt,fontSize:10}}/>
+              <YAxis tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false} unit="%"/>
+              <Tooltip contentStyle={tt}/>
+              <Bar dataKey="expected" fill={K.blu} fillOpacity={0.25} name="Expected (Benford)" radius={[3,3,0,0]}/>
+              <Bar dataKey="actual" name="Actual (MJEs)" radius={[3,3,0,0]}>
+                {benfordData.map(function(d,i){return <Cell key={i} fill={Math.abs(d.actual-d.expected)>3?K.red:K.grn}/>;})}</Bar>
+              <Legend wrapperStyle={{fontSize:9,color:K.dim}}/>
+            </ComposedChart>
+          </ResponsiveContainer>
+        </Pnl>
+        <G c="repeat(3,1fr)">
+          <Pnl><div style={{fontSize:10,fontWeight:600,color:K.dim,marginBottom:8}}>Digit 9 Anomaly</div><div style={{fontSize:28,fontWeight:700,color:K.red}}>14.8%</div><div style={{fontSize:10,color:K.fnt}}>Expected: 4.6% | Deviation: +10.2pp</div><div style={{fontSize:9,color:K.tx2,marginTop:6,lineHeight:1.5}}>Digit 9 is massively over-represented. This strongly suggests round-number manipulation (amounts like 9,000, 90,000, 900,000). Immediate investigation recommended.</div></Pnl>
+          <Pnl><div style={{fontSize:10,fontWeight:600,color:K.dim,marginBottom:8}}>Digit 1 Deficit</div><div style={{fontSize:28,fontWeight:700,color:K.amb}}>22.4%</div><div style={{fontSize:10,color:K.fnt}}>Expected: 30.1% | Deviation: -7.7pp</div><div style={{fontSize:9,color:K.tx2,marginTop:6,lineHeight:1.5}}>Digit 1 is under-represented, corroborating the round-number hypothesis. Natural transaction amounts should follow Benford distribution closely.</div></Pnl>
+          <Pnl><div style={{fontSize:10,fontWeight:600,color:K.dim,marginBottom:8}}>Overall Conformity</div><div style={{fontSize:28,fontWeight:700,color:K.red}}>FAIL</div><div style={{fontSize:10,color:K.fnt}}>Chi-squared test: p {"<"} 0.001</div><div style={{fontSize:9,color:K.tx2,marginTop:6,lineHeight:1.5}}>The MJE population significantly deviates from Benford's Law. {mjeStats.benfordFail} of {mjeStats.total} entries failed individual digit tests. Full review of round-number entries required.</div></Pnl>
+        </G>
+      </F>}
+
+      {/* ─── WHO/WHEN/WHAT ─── */}
+      {sub==="Who/When/What"&&<F>
+        <Pnl>
+          <Hdr icon={Users} t={"Who \u2014 MJE User Risk Profile"} sub="Users ranked by risk: entries posted to unusual GLs, frequency of flags" ac={K.ros}/>
+          <div style={{display:"grid",gridTemplateColumns:"120px 80px 60px 70px 70px 1fr",fontSize:9,fontWeight:600,color:K.dim,padding:"0 10px 8px",borderBottom:"1px solid #f1f3f5"}}>
+            <span>User</span><span>Dept</span><span>Entries</span><span>High Risk</span><span>Avg Score</span><span>Flags</span>
+          </div>
+          <F g={3} s={{marginTop:6}}>
+            {mjeByUser.map(function(u){
+              var c=u.avgScore>=60?K.red:u.avgScore>=40?K.amb:K.grn;
+              return <TblRow key={u.user}>
+                <div style={{display:"grid",gridTemplateColumns:"120px 80px 60px 70px 70px 1fr",width:"100%",alignItems:"center",fontSize:10}}>
+                  <span style={{fontWeight:600,color:K.tx}}>{u.user}</span>
+                  <span style={{color:K.dim}}>{u.dept}</span>
+                  <span>{u.entries}</span>
+                  <span style={{fontWeight:700,color:u.highRisk>5?K.red:u.highRisk>2?K.amb:K.grn}}>{u.highRisk}</span>
+                  <span style={{fontWeight:700,color:c}}>{u.avgScore}</span>
+                  <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>{u.flags.map(function(f){return <Bdg key={f} l={f} c={K.ros}/>;})}</div>
+                </div>
+              </TblRow>;
+            })}
+          </F>
+        </Pnl>
+        <Pnl>
+          <Hdr icon={Clock} t={"When \u2014 Posting Time Analysis"} sub="Business hours vs after-hours, weekends, holidays" ac={K.amb}/>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={mjeByTiming} barGap={1}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f3f5"/>
+              <XAxis dataKey="month" tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/>
+              <YAxis tick={{fill:K.dim,fontSize:9}} axisLine={false} tickLine={false}/>
+              <Tooltip contentStyle={tt}/>
+              <Bar dataKey="businessHrs" stackId="t" fill={K.grn} name="Business Hours"/>
+              <Bar dataKey="afterHrs" stackId="t" fill={K.amb} name="After Hours"/>
+              <Bar dataKey="weekends" stackId="t" fill={K.red} name="Weekends"/>
+              <Bar dataKey="holidays" stackId="t" fill={K.ros} name="Holidays" radius={[3,3,0,0]}/>
+              <Legend wrapperStyle={{fontSize:9,color:K.dim}}/>
+            </BarChart>
+          </ResponsiveContainer>
+        </Pnl>
+      </F>}
+
+      {/* ─── GL RECONCILIATION ─── */}
+      {sub==="GL Reconciliation"&&<F>
+        <G c="repeat(4,1fr)">
+          <Kpi icon={CheckCircle} l="Matched" v={glRecons.filter(function(r){return r.status==="Matched";}).length+"/"+glRecons.length} sub="fully reconciled" ac={K.grn}/>
+          <Kpi icon={AlertCircle} l="Open Breaks" v={glRecons.filter(function(r){return r.status==="Open";}).length} sub="unresolved" ac={K.red}/>
+          <Kpi icon={Clock} l="Investigating" v={glRecons.filter(function(r){return r.status==="Investigating";}).length} ac={K.amb}/>
+          <Kpi icon={DollarSign} l="Total Break Amount" v={"LKR "+(glRecons.reduce(function(s,r){return s+r.breakAmt;},0)/1000000).toFixed(1)+"M"} ac={K.ros}/>
+        </G>
+        <Pnl>
+          <Hdr icon={Database} t="GL Reconciliation Status — Sub-Ledger vs General Ledger" sub="Every GL tested for balance integrity. Breaks highlighted by age and severity." ac={K.blu}/>
+          <div style={{overflowX:"auto"}}>
+            <div style={{display:"grid",gridTemplateColumns:"50px 130px 100px 100px 90px 60px 50px 80px 70px",fontSize:9,fontWeight:600,color:K.dim,padding:"0 10px 8px",borderBottom:"1px solid #f1f3f5",minWidth:780}}>
+              <span>GL</span><span>Account Name</span><span>Sub-Ledger Bal</span><span>GL Balance</span><span>Break Amount</span><span>Break %</span><span>Age</span><span>Status</span><span>Priority</span>
+            </div>
+            <F g={3} s={{marginTop:6}}>
+              {glRecons.map(function(r){
+                var pc=r.priority==="Critical"?K.red:r.priority==="High"?K.org:r.priority==="Medium"?K.amb:K.grn;
+                var stc=r.status==="Matched"?K.grn:r.status==="Open"?K.red:r.status==="Investigating"?K.amb:K.blu;
+                return <TblRow key={r.gl}>
+                  <div style={{display:"grid",gridTemplateColumns:"50px 130px 100px 100px 90px 60px 50px 80px 70px",width:"100%",alignItems:"center",fontSize:10,minWidth:780}}>
+                    <span style={{fontFamily:"monospace",fontWeight:600,color:K.dim}}>{r.gl}</span>
+                    <span style={{fontWeight:500,color:K.tx}}>{r.name}</span>
+                    <span style={{fontFamily:"monospace",color:K.dim}}>{(r.subLedger/1000000).toFixed(2)}M</span>
+                    <span style={{fontFamily:"monospace",color:K.dim}}>{(r.glBal/1000000).toFixed(2)}M</span>
+                    <span style={{fontWeight:700,color:r.breakAmt>0?K.red:K.grn}}>{r.breakAmt>0?(r.breakAmt/1000).toFixed(0)+"K":"0"}</span>
+                    <span style={{color:r.breakPct>0.1?K.red:K.dim}}>{r.breakPct}%</span>
+                    <span style={{color:K.fnt}}>{r.age}</span>
+                    <Bdg l={r.status} c={stc}/>
+                    <Bdg l={r.priority} c={pc}/>
+                  </div>
+                </TblRow>;
+              })}
+            </F>
+          </div>
+        </Pnl>
+      </F>}
+
+      {/* ─── AGENTIC AI ─── */}
+      {sub==="Agentic AI"&&<F>
+        <G c="repeat(4,1fr)">
+          <Kpi icon={Bot} l="Cases Processed" v={agentCases.length} sub="by autonomous agents" ac={K.vio}/>
+          <Kpi icon={CheckCircle} l="Auto-Resolved" v={agentCases.filter(function(c){return c.status==="Resolved";}).length} ac={K.grn}/>
+          <Kpi icon={Clock} l="Avg Resolution" v="6min" sub="vs 4.5hrs manual" ac={K.blu}/>
+          <Kpi icon={Target} l="Avg Confidence" v={Math.round(agentCases.reduce(function(s,c){return s+c.confidence;},0)/agentCases.length)+"%"} ac={K.amb}/>
+        </G>
+        <Pnl>
+          <Hdr icon={Bot} t="Autonomous Financial Agent — Resolution Tracker" sub={"AI Agents reason through GL mismatches, retrieve evidence, and propose adjustments. Handles 90%+ of exceptions (vs RPA\u2019s 60%)."} ac={K.vio}/>
+          <F g={6}>
+            {agentCases.map(function(c){
+              var stc=c.status==="Resolved"?K.grn:c.status==="In Progress"?K.blu:K.amb;
+              return <div key={c.id} style={{padding:14,borderRadius:10,border:"1px solid "+stc+"22",background:stc+"05"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:11,fontFamily:"monospace",fontWeight:700,color:K.tx}}>{c.id}</span>
+                    <Bdg l={c.type} c={K.indigo}/>
+                    <span style={{fontSize:9,color:K.fnt}}>GL: {c.gl}</span>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:9,color:K.dim}}>{c.time}</span>
+                    <Bdg l={c.status} c={stc}/>
+                  </div>
+                </div>
+                <div style={{fontSize:10,color:K.tx2,lineHeight:1.5,marginBottom:6}}>{c.action}</div>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{fontSize:9,color:K.dim}}>Resolution: <span style={{fontWeight:600,color:K.tx}}>{c.resolution}</span></span>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}>
+                    <span style={{fontSize:9,color:K.fnt}}>Confidence:</span>
+                    <span style={{fontSize:11,fontWeight:700,color:c.confidence>=90?K.grn:c.confidence>=70?K.amb:K.red}}>{c.confidence}%</span>
+                    <div style={{width:50}}><Prog pct={c.confidence} c={c.confidence>=90?K.grn:c.confidence>=70?K.amb:K.red} h={3}/></div>
+                  </div>
+                </div>
+              </div>;
+            })}
+          </F>
+        </Pnl>
+      </F>}
+
+      {/* ─── AUDIT PIPELINE ─── */}
+      {sub==="Audit Pipeline"&&<F>
+        <Pnl>
+          <Hdr icon={Layers} t="Building a Data-Driven Audit Universe — 4-Step Pipeline" sub="Scope, Extract, Detect, Score — across all 5,200+ GL accounts" ac={K.sky}/>
+          <G c="repeat(4,1fr)" g={14}>
+            {auditPipeline.map(function(p){
+              var c=[K.blu,K.grn,K.amb,K.vio][p.step-1];
+              return <div key={p.step} style={{padding:16,borderRadius:12,border:"1px solid "+c+"22",background:c+"04"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                  <div style={{width:28,height:28,borderRadius:8,background:c+"15",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:c}}>{p.step}</div>
+                  <div>
+                    <div style={{fontSize:12,fontWeight:700,color:K.tx}}>{p.title}</div>
+                    <div style={{fontSize:8,color:K.fnt}}>{p.items} GL accounts</div>
+                  </div>
+                </div>
+                <div style={{fontSize:9,color:K.tx2,lineHeight:1.5,marginBottom:10}}>{p.desc}</div>
+                <div style={{marginBottom:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                    <span style={{fontSize:8,color:K.dim}}>Completion</span>
+                    <span style={{fontSize:10,fontWeight:700,color:c}}>{p.status}%</span>
+                  </div>
+                  <Prog pct={p.status} c={c} h={5}/>
+                </div>
+                <div style={{fontSize:9,fontWeight:600,color:K.dim,marginBottom:4}}>Typical Anomalies</div>
+                <F g={2}>{p.anomalies.map(function(a){return <div key={a} style={{fontSize:8,color:K.tx2,display:"flex",alignItems:"flex-start",gap:4}}><AlertTriangle size={9} color={K.amb} style={{marginTop:1,flexShrink:0}}/>{a}</div>;})}</F>
+                <div style={{fontSize:9,fontWeight:600,color:K.dim,marginTop:8,marginBottom:4}}>Analytics</div>
+                <F g={2}>{p.analytics.map(function(a){return <div key={a} style={{fontSize:8,color:K.tx2,display:"flex",alignItems:"flex-start",gap:4}}><Cpu size={9} color={c} style={{marginTop:1,flexShrink:0}}/>{a}</div>;})}</F>
+                <div style={{fontSize:9,fontWeight:600,color:K.dim,marginTop:8,marginBottom:4}}>GenAI</div>
+                <F g={2}>{p.genai.map(function(a){return <div key={a} style={{fontSize:8,color:K.tx2,display:"flex",alignItems:"flex-start",gap:4}}><Bot size={9} color={K.vio} style={{marginTop:1,flexShrink:0}}/>{a}</div>;})}</F>
+              </div>;
+            })}
+          </G>
+        </Pnl>
+      </F>}
+
+      {/* Detail Panel for MJE entries */}
+      <DetailPanel open={!!selEntry} title={"Entry: "+((selEntry||{}).id||"")} onClose={function(){setSelMje(null);}}>
+        {selEntry&&<F g={10}>
+          <div style={{padding:12,borderRadius:8,background:(selEntry.riskScore>=80?K.red:selEntry.riskScore>=60?K.amb:K.grn)+"08",border:"1px solid "+(selEntry.riskScore>=80?K.red:selEntry.riskScore>=60?K.amb:K.grn)+"22"}}>
+            <div style={{display:"flex",justifyContent:"space-between"}}>
+              <div><div style={{fontSize:10,color:K.dim}}>Risk Score</div><div style={{fontSize:28,fontWeight:700,color:selEntry.riskScore>=80?K.red:selEntry.riskScore>=60?K.amb:K.grn}}>{selEntry.riskScore}<span style={{fontSize:11,color:K.fnt}}> / 100</span></div></div>
+              <div style={{textAlign:"right"}}><div style={{fontSize:10,color:K.dim}}>Benford Test</div><div style={{fontSize:20,fontWeight:700,color:selEntry.benford==="Fail"?K.red:K.grn}}>{selEntry.benford}</div></div>
+            </div>
+          </div>
+          <G c="1fr 1fr" g={6}>
+            {[["GL Account",selEntry.gl+" - "+selEntry.glName],["Amount","LKR "+(selEntry.amount).toLocaleString()],["User",selEntry.user],["Department",selEntry.dept],["Date",selEntry.date],["Time",selEntry.time+" ("+selEntry.day+")"],["Entry Type",selEntry.type],["Status",selEntry.status]].map(function(r){return <div key={r[0]} style={{padding:8,borderRadius:6,background:"#f8f9fc"}}><div style={{fontSize:8,color:K.fnt}}>{r[0]}</div><div style={{fontSize:12,fontWeight:600,color:K.tx}}>{r[1]}</div></div>;})}
+          </G>
+          {selEntry.flags.length>0&&<div>
+            <div style={{fontSize:10,fontWeight:600,color:K.dim,marginBottom:6}}>Anomaly Flags</div>
+            <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{selEntry.flags.map(function(f){return <Bdg key={f} l={f} c={K.red}/>;})}</div>
+          </div>}
+          <div style={{padding:12,borderRadius:8,background:K.blu+"08",border:"1px solid "+K.blu+"22"}}>
+            <div style={{fontSize:10,fontWeight:600,color:K.blu,marginBottom:4}}>AI Analysis</div>
+            <div style={{fontSize:10,color:K.tx2,lineHeight:1.6}}>
+              {selEntry.riskScore>=80?"HIGH RISK: This entry exhibits multiple fraud indicators. "+selEntry.flags.length+" anomaly flags triggered. Recommend immediate investigation by Internal Audit. The combination of "+selEntry.flags.join(", ")+" is a strong indicator of potential unauthorized activity.":
+              selEntry.riskScore>=60?"MEDIUM RISK: Entry shows some unusual patterns. "+selEntry.flags.length+" flags detected. Recommend review by line manager before processing. Monitor user activity for recurring patterns.":
+              "LOW RISK: Entry appears within normal operating parameters. No significant anomalies detected. Auto-cleared by risk scoring engine."}
+            </div>
+          </div>
+        </F>}
+      </DetailPanel>
+    </F>
+  );
+}
+
+/* ═══════════════════ MAIN ═══════════════════ */
+var TABS=[{id:"proactive",label:"Proactive",icon:Shield,ac:K.grn,sub:"Predict & Prevent"},{id:"reactive",label:"Reactive",icon:AlertTriangle,ac:K.red,sub:"Detect & Respond"},{id:"feedback",label:"Feedback",icon:RotateCcw,ac:K.vio,sub:"Learn & Improve"},{id:"glaudit",label:"GL & MJE Audit",icon:FileText,ac:K.indigo,sub:"Journal Entry Testing"},{id:"operational",label:"Operational",icon:Briefcase,ac:K.blu,sub:"Day-to-Day Ops"},{id:"executive",label:"Executive",icon:Landmark,ac:K.amb,sub:"Board & C-Suite"}];
+
+function App(){
+  var _t=useState("proactive"),tab=_t[0],setTab=_t[1];
+  var _n=useState(new Date()),now=_n[0],setNow=_n[1];
+  useEffect(function(){var id=setInterval(function(){setNow(new Date());},1000);return function(){clearInterval(id);};},[]);
+  return(
+    <div style={{minHeight:"100vh",color:K.tx,background:K.bg,fontFamily:"'DM Sans','Segoe UI',system-ui,sans-serif"}}>
+      <div style={{borderBottom:"1px solid "+K.border,padding:"12px 24px",background:"#fff"}}>
+        <div style={{maxWidth:1360,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{display:"flex",alignItems:"center",gap:12}}><div style={{width:38,height:38,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(135deg,"+K.grn+","+K.blu+","+K.vio+")"}}><Shield size={18} color="#fff"/></div><div><div style={{fontSize:15,fontWeight:700,letterSpacing:"-0.02em"}}>Audit Universe 2014 Risk Intelligence Platform</div><div style={{fontSize:8,color:K.fnt}}>End-to-End 2022 70+ AI Products 2022 6 Dashboard Layers</div></div></div>
+          <div style={{display:"flex",alignItems:"center",gap:14}}><div style={{display:"flex",alignItems:"center",gap:5,padding:"3px 10px",borderRadius:7,background:K.grn+"0d",border:"1px solid "+K.grn+"22"}}><Dot c={K.grn} pulse/><span style={{fontSize:9,color:K.grn,fontWeight:600}}>LIVE</span></div><div style={{textAlign:"right"}}><div style={{fontSize:10,fontFamily:"monospace",color:K.dim}}>{now.toLocaleTimeString()}</div><div style={{fontSize:7,color:K.fnt}}>{now.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"short",day:"numeric"})}</div></div></div>
+        </div>
+      </div>
+      <div style={{borderBottom:"1px solid "+K.border,padding:"0 24px",background:"#fff",overflowX:"auto"}}>
+        <div style={{maxWidth:1360,margin:"0 auto",display:"flex",gap:2,paddingTop:6,paddingBottom:6}}>{TABS.map(function(t){var on=tab===t.id;var I=t.icon;return <button key={t.id} onClick={function(){setTab(t.id);}} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 14px",borderRadius:8,border:on?"1px solid "+t.ac+"33":"1px solid transparent",background:on?t.ac+"0a":"transparent",cursor:"pointer",transition:"all .15s",color:on?K.tx:K.dim,whiteSpace:"nowrap"}}><I size={14} color={on?t.ac:K.fnt}/><div style={{textAlign:"left"}}><div style={{fontSize:11,fontWeight:on?600:400}}>{t.label}</div><div style={{fontSize:7,color:K.fnt}}>{t.sub}</div></div></button>;})}</div>
+      </div>
+      <div style={{padding:"18px 24px",background:K.bg2,minHeight:"calc(100vh - 140px)"}}>
+        <div style={{maxWidth:1360,margin:"0 auto"}}>{tab==="proactive"&&<ProactiveTab/>}{tab==="reactive"&&<ReactiveTab/>}{tab==="feedback"&&<FeedbackTab/>}{tab==="glaudit"&&<GLAuditTab/>}{tab==="operational"&&<OperationalTab/>}{tab==="executive"&&<ExecutiveTab/>}</div>
+      </div>
+      <div style={{borderTop:"1px solid "+K.border,padding:"8px 24px",background:"#fff"}}><div style={{maxWidth:1360,margin:"0 auto",display:"flex",justifyContent:"space-between",fontSize:7,color:K.fnt}}><span>Audit Universe v4.0 2014 6 Dashboard Layers 00b7 GL & MJE Full Population Testing 00b7 70+ AI Products</span><span>Advanced Analytics 2022 GenAI & Agentic AI 2022 Digital Tooling</span></div></div>
+      <style>{"\n@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}\n"}</style>
+    </div>
+  );
+}
+
+
+/* === RENDER === */
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
