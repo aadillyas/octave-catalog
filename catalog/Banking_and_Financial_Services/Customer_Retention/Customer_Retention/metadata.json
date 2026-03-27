@@ -1,0 +1,12 @@
+{
+  "id": "customer-retention",
+  "title": "Customer Retention",
+  "industry": "Banking & Financial Services",
+  "valueChain": "Customer Retention",
+  "tagline": "Retaining customers using other domain data sets",
+  "status": "approved",
+  "complexity": "Medium",
+  "roi": "10% retention and upliftment",
+  "deployTime": "4",
+  "publishedDate": "2026-03-27"
+}
