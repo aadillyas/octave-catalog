@@ -232,7 +232,8 @@
           "summary": "Credit risk modelling, fraud detection, and underwriting automation",
           "useCases": [
             "Credit Scoring",
-            "Fraud Detection"
+            "Fraud Detection",
+            "Audit universe for BFS"
           ]
         },
         {
