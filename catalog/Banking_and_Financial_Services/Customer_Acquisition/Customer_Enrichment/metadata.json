@@ -1,0 +1,12 @@
+{
+  "id": "customer-enrichment",
+  "title": "Customer Enrichment",
+  "industry": "Banking & Financial Services",
+  "valueChain": "Customer Acquisition",
+  "tagline": "Merging Banking Customers with any other domain data inline with GDPR",
+  "status": "approved",
+  "complexity": "Medium",
+  "roi": "15% uplift",
+  "deployTime": "4",
+  "publishedDate": "2026-03-27"
+}
