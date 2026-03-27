@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMEX × NEXUS Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:#000}
+button{cursor:pointer;font-family:inherit}
+input{font-family:inherit}
+canvas{max-width:100%}
+@media print{button{display:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+var e = React.createElement;
+var useState = React.useState;
+var useEffect = React.useEffect;
+var useRef = React.useRef;
+
+var TABS = ["Overview","Segmentation","Pilot Performance","Use Cases","Data Quality","Tracking","Campaign Wizard","Campaigns"];
+
+var C = {
+  b1:"#0c2461",b2:"#1e3a8a",b3:"#1d4ed8",b4:"#3b82f6",b5:"#60a5fa",b6:"#93c5fd",b7:"#bfdbfe",
+  p1:"#831843",p2:"#9d174d",p3:"#be185d",p4:"#ec4899",p5:"#f472b6",p6:"#f9a8d4",p7:"#fbcfe8",
+  bg:"#ffffff",bd:"#e2e8f0",tx:"#000000",sub:"#334155",mu:"#64748b",lt:"#f1f5f9"
+};
+
+var SCOL = [C.b2, C.b4, C.p2, C.p4, C.b5, C.p6];
+var BCOL = [C.b2, C.b4, C.p3, C.p5];
+
+function fmt(n) {
+  if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(1) + "B";
+  if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(1) + "M";
+  if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(1) + "K";
+  return Math.round(n).toString();
+}
+
+function Card(props) {
+  var st = {background:C.bg, borderRadius:12, padding:18, border:"1px solid "+C.bd};
+  if (props.accent) st.borderTop = "3px solid " + props.accent;
+  if (props.span) st.gridColumn = "span " + props.span;
+  return e("div", {style:st},
+    props.title ? e("div", {style:{fontSize:13,fontWeight:700,color:C.tx,marginBottom:12}}, props.title) : null,
+    props.children
+  );
+}
+
+function KPI(props) {
+  var trendColor = props.trend === "up" ? C.b3 : props.trend === "down" ? C.p2 : C.mu;
+  return e("div", {style:{textAlign:"center",padding:"10px 6px"}},
+    e("div", {style:{fontSize:24,fontWeight:800,color:props.color || C.tx}}, props.value),
+    e("div", {style:{fontSize:11,color:C.sub,marginTop:2}}, props.label),
+    props.sub ? e("div", {style:{fontSize:10,color:trendColor,marginTop:2}}, props.sub) : null
+  );
+}
+
+function Dot(props) {
+  var col = C.mu;
+  if (props.s === "live" || props.s === "completed") col = C.b3;
+  if (props.s === "pilot" || props.s === "running") col = C.p3;
+  if (props.s === "scheduled") col = C.b5;
+  return e("span", {style:{display:"inline-block",width:8,height:8,borderRadius:"50%",background:col,marginRight:6}});
+}
+
+function Btn(props) {
+  var bg = props.disabled ? C.lt : props.primary ? C.b2 : C.bg;
+  var clr = props.disabled ? C.mu : props.primary ? "#fff" : C.tx;
+  var pad = props.small ? "6px 14px" : "10px 20px";
+  var fs = props.small ? 11 : 13;
+  return e("button", {onClick:props.onClick, disabled:props.disabled, style:{padding:pad,borderRadius:8,border:props.primary?"none":"1px solid "+C.bd,background:bg,color:clr,fontSize:fs,fontWeight:600,cursor:props.disabled?"not-allowed":"pointer",opacity:props.disabled?0.6:1}}, props.children);
+}
+
+function ChartBox(props) {
+  var canvasRef = useRef(null);
+  var chartRef = useRef(null);
+  var dataStr = JSON.stringify(props.data);
+
+  useEffect(function() {
+    if (chartRef.current) chartRef.current.destroy();
+    var ctx = canvasRef.current.getContext("2d");
+    var opts = props.options || {};
+    var scales = {};
+    if (opts.scales) {
+      Object.keys(opts.scales).forEach(function(k) {
+        var s = opts.scales[k];
+        scales[k] = Object.assign({}, s, {
+          ticks: Object.assign({}, s.ticks || {}, {color: C.tx, font: {size: 10}}),
+          grid: {color: C.bd}
+        });
+      });
+    }
+    chartRef.current = new Chart(ctx, {
+      type: props.type,
+      data: props.data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: Object.assign({}, opts.plugins || {}, {
+          legend: Object.assign({}, (opts.plugins || {}).legend || {}, {
+            labels: {font: {size: 10}, color: C.tx}
+          })
+        }),
+        scales: scales,
+        indexAxis: opts.indexAxis
+      }
+    });
+    return function() { if (chartRef.current) chartRef.current.destroy(); };
+  }, [props.type, dataStr]);
+
+  return e("div", {style:{height: props.h || 240}}, e("canvas", {ref: canvasRef}));
+}
+
+// ===== DATA =====
+var SEGS = [
+  {id:1, name:"Keells Only", pop:9644, desc:"Cash/other cards at Keells", vf:"Bank", col:SCOL[0]},
+  {id:2, name:"Keells+Amex", pop:6115, desc:"Amex at Keells", vf:"Both", col:SCOL[1]},
+  {id:3, name:"Amex Only", pop:19020, desc:"Amex not at supermarkets", vf:"Keells", col:SCOL[2]},
+  {id:4, name:"Amex+Competitors", pop:11031, desc:"Competitors not Keells", vf:"Keells", col:SCOL[3]},
+  {id:5, name:"Keells+Comp+Amex", pop:36140, desc:"Keells & competitors w/ Amex", vf:"Both", col:SCOL[4]},
+  {id:6, name:"Inactive Amex", pop:2179, desc:"No Amex usage", vf:"Both", col:SCOL[5]}
+];
+var TOTAL_IP = 84129;
+var DELTA2 = [{cat:"Total AMEX Card",val:1.72},{cat:"Keells Spend",val:2.16},{cat:"Other Modern Trade",val:0.36},{cat:"Lodging Spend",val:8.25}];
+var REDEM = [{w:"6-Oct",bd:5,cb:10},{w:"13-Oct",bd:10,cb:14},{w:"20-Oct",bd:14,cb:20},{w:"27-Oct",bd:15,cb:24},{w:"3-Nov",bd:14,cb:28},{w:"10-Nov",bd:10,cb:30},{w:"17-Nov",bd:5,cb:30}];
+var MAPQ = [{t:"NIC Match",r:43.51},{t:"Mobile Match",r:47.06},{t:"Either",r:59.8},{t:"Both",r:28.3}];
+var MONTHLY = [{m:"Jul",cs:12,bs:2800,nc:120,rt:92},{m:"Aug",cs:18,bs:2950,nc:185,rt:91},{m:"Sep",cs:25,bs:3100,nc:240,rt:93},{m:"Oct",cs:35,bs:3250,nc:310,rt:94},{m:"Nov",cs:42,bs:3400,nc:380,rt:93},{m:"Dec",cs:55,bs:3650,nc:460,rt:95}];
+var WORKSTREAMS = [{w:"Data ingestion",o:"OCTAVE",s:"live",d:"Done",p:100},{w:"Identity resolution",o:"OCTAVE",s:"live",d:"Done",p:100},{w:"Segments",o:"OCTAVE",s:"live",d:"Done",p:100},{w:"UC1 Pilot (40K)",o:"OCTAVE+NTB",s:"pilot",d:"Q2'24",p:65},{w:"UC1 Scale",o:"OCTAVE+NTB",s:"planned",d:"Q3'24",p:20},{w:"UC2 Model Build",o:"OCTAVE",s:"pilot",d:"Q3'24",p:45},{w:"UC2 Activation",o:"NTB+JMSL",s:"planned",d:"Q3'24",p:15},{w:"Attribution",o:"OCTAVE",s:"pilot",d:"Ongoing",p:55},{w:"Steer Co",o:"All",s:"live",d:"Quarterly",p:100}];
+
+var INIT_CAMPS = [
+  {id:"CMP-001",nm:"Amex Spend Boost — Premium",uc:"Enrichment",ex:"NTB",ch:"SMS",sg:"S2+S5",au:12400,sn:12400,dl:11780,op:4120,cv:1240,st:"completed"},
+  {id:"CMP-002",nm:"Dormant Amex Reactivation",uc:"Enrichment",ex:"NTB",ch:"App Notification",sg:"S6",au:2179,sn:2179,dl:1960,op:890,cv:218,st:"completed"},
+  {id:"CMP-003",nm:"New Shopper Acquisition",uc:"Acquisition",ex:"Nexus",ch:"SMS",sg:"S3+S4",au:30051,sn:30051,dl:28548,op:8560,cv:2404,st:"running"},
+  {id:"CMP-004",nm:"Cross-BU Retention HV",uc:"Enrichment",ex:"NTB",ch:"API",sg:"S5(HV)",au:8000,sn:8000,dl:7840,op:3920,cv:1120,st:"running"},
+  {id:"CMP-005",nm:"Card Acq — Loyalists",uc:"Acquisition",ex:"NTB",ch:"SMS",sg:"S1",au:9644,sn:9644,dl:9160,op:3200,cv:772,st:"running"},
+  {id:"CMP-006",nm:"Competitor Win-Back",uc:"Acquisition",ex:"Nexus",ch:"App Notification",sg:"S5(Comp)",au:20020,sn:0,dl:0,op:0,cv:0,st:"scheduled"},
+  {id:"CMP-007",nm:"Holiday Basket Boost",uc:"Enrichment",ex:"Nexus",ch:"App Notification",sg:"S2",au:6115,sn:6115,dl:5870,op:2935,cv:917,st:"completed"},
+  {id:"CMP-008",nm:"Premium Upsell",uc:"Enrichment",ex:"NTB",ch:"API",sg:"S2+S5(P)",au:5200,sn:5200,dl:5096,op:2548,cv:780,st:"completed"}
+];
+
+// ===== MAIN APP =====
+function App() {
+  var viewState = useState(0);
+  var view = viewState[0];
+  var setView = viewState[1];
+
+  var campState = useState(INIT_CAMPS);
+  var camps = campState[0];
+  var setCamps = campState[1];
+
+  // Wizard state
+  var s1 = useState(0); var wStep = s1[0]; var setWStep = s1[1];
+  var s2 = useState(null); var wSrc = s2[0]; var setWSrc = s2[1];
+  var s3 = useState(null); var wFile = s3[0]; var setWFile = s3[1];
+  var s4 = useState(false); var wVing = s4[0]; var setWVing = s4[1];
+  var s5 = useState(false); var wVdone = s5[0]; var setWVdone = s5[1];
+  var s6 = useState(false); var wMing = s6[0]; var setWMing = s6[1];
+  var s7 = useState(false); var wMdone = s7[0]; var setWMdone = s7[1];
+  var s8 = useState(""); var wName = s8[0]; var setWName = s8[1];
+  var s9 = useState(null); var wChan = s9[0]; var setWChan = s9[1];
+  var s10 = useState(null); var wExec = s10[0]; var setWExec = s10[1];
+  var s11 = useState([]); var wSegs = s11[0]; var setWSegs = s11[1];
+  var s12 = useState(null); var wUC = s12[0]; var setWUC = s12[1];
+  var s13 = useState(false); var wDone = s13[0]; var setWDone = s13[1];
+
+  var valData = {total: wSrc === "amex" ? 142680 : 168420, valid: wSrc === "amex" ? 138210 : 162890, invalid: wSrc === "amex" ? 4470 : 5530, complete: wSrc === "amex" ? 96.9 : 96.7};
+  var mapData = {matched: 84129, nic: 36660, mobile: 39620, either: 50310, rate: 59.8};
+
+  function doValidate() { setWVing(true); setTimeout(function() { setWVing(false); setWVdone(true); }, 2000); }
+  function doMapping() { setWMing(true); setTimeout(function() { setWMing(false); setWMdone(true); }, 2500); }
+
+  function launchCampaign() {
+    var sz = Math.round(mapData.either * (0.15 + Math.random() * 0.35));
+    var nc = {id:"CMP-"+String(camps.length+1).padStart(3,"0"), nm:wName||"New Campaign", uc:wUC||"Enrichment", ex:wExec||"NTB", ch:wChan||"SMS", sg:wSegs.join("+")||"All", au:sz, sn:0, dl:0, op:0, cv:0, st:"scheduled"};
+    setCamps(camps.concat([nc]));
+    setWDone(true);
+  }
+
+  function resetWiz() {
+    setWStep(0); setWSrc(null); setWFile(null); setWVing(false); setWVdone(false);
+    setWMing(false); setWMdone(false); setWName(""); setWChan(null); setWExec(null);
+    setWSegs([]); setWUC(null); setWDone(false);
+  }
+
+  // === Helper components ===
+  function SelCard(props) {
+    var bg = props.sel ? (props.clr === C.b3 ? C.b7 : C.p7) : C.bg;
+    return e("div", {onClick:props.onClick, style:{padding:18,borderRadius:12,border:"2px solid "+(props.sel?props.clr:C.bd),background:bg,cursor:"pointer",textAlign:"center"}},
+      e("div",{style:{fontSize:28}}, props.icon),
+      e("div",{style:{fontSize:13,fontWeight:700,color:C.tx,marginTop:6}}, props.title),
+      e("div",{style:{fontSize:11,color:C.sub,marginTop:4}}, props.desc)
+    );
+  }
+
+  function ChkBox(props) {
+    return e("div", {onClick:props.onClick, style:{padding:10,borderRadius:8,border:"1.5px solid "+(props.sel?C.b3:C.bd),background:props.sel?C.b7:C.bg,cursor:"pointer",display:"flex",alignItems:"center",gap:8}},
+      e("div",{style:{width:16,height:16,borderRadius:4,border:"2px solid "+(props.sel?C.b3:C.mu),background:props.sel?C.b3:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}, props.sel ? e("span",{style:{color:"#fff",fontSize:11,fontWeight:700}},"✓") : null),
+      e("div",null,
+        e("div",{style:{fontSize:11,fontWeight:600,color:C.tx}}, props.label),
+        props.sub ? e("div",{style:{fontSize:10,color:C.mu}}, props.sub) : null
+      )
+    );
+  }
+
+  function ProgBar(props) {
+    var bg = props.color || C.b3;
+    if (props.status === "completed") bg = C.b3;
+    else if (props.status === "running") bg = C.p3;
+    else bg = C.mu;
+    return e("div",{style:{background:C.lt,borderRadius:4,height:props.h||14,width:props.w||80,overflow:"hidden"}},
+      e("div",{style:{height:"100%",borderRadius:4,width:props.pct+"%",background:bg,display:"flex",alignItems:"center",justifyContent:"center"}},
+        e("span",{style:{fontSize:props.fs||8,fontWeight:700,color:"#fff"}}, props.pct+"%")
+      )
+    );
+  }
+
+  // ========== TAB RENDERERS ==========
+
+  function renderOverview() {
+    return e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}},
+      e(Card,{span:4,accent:C.b2},
+        e("div",{style:{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8}},
+          e(KPI,{label:"Intersection Pop.",value:fmt(TOTAL_IP),color:C.b2}),
+          e(KPI,{label:"Pilot",value:"40K",color:C.b4,sub:"47.6%"}),
+          e(KPI,{label:"PBT",value:"Rs.170M",color:C.b3,sub:"UC1+UC2",trend:"up"}),
+          e(KPI,{label:"Non-Amex",value:"Rs.8B",color:C.p3}),
+          e(KPI,{label:"MVP",value:"~10%",color:C.p4,sub:"vs 3%",trend:"up"}),
+          e(KPI,{label:"Delta-2",value:"2.16%",color:C.b5,trend:"up"})
+        )
+      ),
+      e(Card,{span:2,title:"Segmentation",accent:C.b3},
+        e(ChartBox,{type:"doughnut",h:250,data:{labels:SEGS.map(function(s){return "S"+s.id}),datasets:[{data:SEGS.map(function(s){return s.pop}),backgroundColor:SCOL,borderWidth:1,borderColor:C.bg}]},options:{plugins:{legend:{position:"bottom",labels:{boxWidth:12}}}}})
+      ),
+      e(Card,{span:2,title:"Delta-2 Impact %",accent:C.p3},
+        e(ChartBox,{type:"bar",h:250,data:{labels:DELTA2.map(function(d){return d.cat}),datasets:[{data:DELTA2.map(function(d){return d.val}),backgroundColor:BCOL,borderRadius:6}]},options:{indexAxis:"y",scales:{x:{max:10,ticks:{callback:function(v){return v+"%"}}}},plugins:{legend:{display:false}}}})
+      ),
+      e(Card,{span:2,title:"UC Value (PBT)",accent:C.b4},
+        e(ChartBox,{type:"bar",h:200,data:{labels:["UC1: Enrichment","UC2: Acquisition"],datasets:[{data:[70,100],backgroundColor:[C.b3,C.p3],borderRadius:6}]},options:{scales:{y:{ticks:{callback:function(v){return "Rs."+v+"M"}}}},plugins:{legend:{display:false}}}})
+      ),
+      e(Card,{span:2,title:"Mapping Quality",accent:C.b5},
+        e(ChartBox,{type:"bar",h:200,data:{labels:MAPQ.map(function(m){return m.t}),datasets:[{data:MAPQ.map(function(m){return m.r}),backgroundColor:[C.b2,C.b4,C.p3,C.p5],borderRadius:6}]},options:{scales:{y:{max:100,ticks:{callback:function(v){return v+"%"}}}},plugins:{legend:{display:false}}}})
+      )
+    );
+  }
+
+  function renderSegmentation() {
+    return e("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}},
+      e(Card,{span:3,title:"Segments — "+fmt(TOTAL_IP)+" Total",accent:C.b2},
+        e("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}},
+          SEGS.map(function(s,i) {
+            var bgCol = s.vf==="Bank" ? C.b7 : s.vf==="Keells" ? C.p7 : C.b7;
+            var txCol = s.vf==="Bank" ? C.b1 : s.vf==="Keells" ? C.p1 : C.b1;
+            return e("div",{key:i,style:{padding:14,borderRadius:10,border:"1px solid "+C.bd,borderLeft:"4px solid "+s.col}},
+              e("div",{style:{display:"flex",justifyContent:"space-between"}},
+                e("span",{style:{fontSize:13,fontWeight:700,color:C.tx}},"S"+s.id),
+                e("span",{style:{fontSize:18,fontWeight:800,color:s.col}},fmt(s.pop))
+              ),
+              e("div",{style:{fontSize:12,fontWeight:600,color:C.tx,marginTop:4}},s.name),
+              e("div",{style:{fontSize:11,color:C.sub,marginTop:2}},s.desc),
+              e("div",{style:{marginTop:8,display:"inline-block",fontSize:10,padding:"2px 8px",borderRadius:10,fontWeight:600,background:bgCol,color:txCol}},"Value: "+s.vf)
+            );
+          })
+        )
+      ),
+      e(Card,{span:2,title:"S5 Share of Wallet",accent:C.p3},
+        e(ChartBox,{type:"doughnut",h:220,data:{labels:["More at Keells","More at Competitors"],datasets:[{data:[16120,20020],backgroundColor:[C.b3,C.p3],borderWidth:1,borderColor:C.bg}]},options:{plugins:{legend:{position:"bottom"}}}})
+      ),
+      e(Card,{title:"Value Matrix",accent:C.b4},
+        e("div",{style:{fontSize:11,color:C.tx,lineHeight:1.6}},
+          e("div",{style:{padding:8,background:C.b7,borderRadius:6,marginBottom:6}},e("strong",{style:{color:C.b1}},"Bank:")," S1"),
+          e("div",{style:{padding:8,background:C.p7,borderRadius:6,marginBottom:6}},e("strong",{style:{color:C.p1}},"Keells:")," S3, S4"),
+          e("div",{style:{padding:8,background:C.lt,borderRadius:6}},e("strong",null,"Both:")," S2, S5, S6")
+        )
+      )
+    );
+  }
+
+  function renderPilot() {
+    return e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}},
+      e(Card,{span:4,accent:C.p3},
+        e("div",{style:{display:"grid",gridTemplateColumns:"repeat(5,1fr)"}},
+          e(KPI,{label:"Pilot",value:"40K",color:C.b2}),
+          e(KPI,{label:"MVP",value:"~10%",color:C.p3,sub:"vs 3%",trend:"up"}),
+          e(KPI,{label:"Delta-2",value:"2.16%",color:C.b4,trend:"up"}),
+          e(KPI,{label:"Cannibal.",value:"None",color:C.b3,trend:"up"}),
+          e(KPI,{label:"Lift",value:"~20%",color:C.p4,trend:"up"})
+        )
+      ),
+      e(Card,{span:2,title:"Delta-2 %",accent:C.b3},
+        e(ChartBox,{type:"bar",h:260,data:{labels:DELTA2.map(function(d){return d.cat}),datasets:[{data:DELTA2.map(function(d){return d.val}),backgroundColor:BCOL,borderRadius:6}]},options:{scales:{y:{max:10,ticks:{callback:function(v){return v+"%"}}}},plugins:{legend:{display:false}}}})
+      ),
+      e(Card,{span:2,title:"Redemption Trajectory",accent:C.p3},
+        e(ChartBox,{type:"line",h:260,data:{labels:REDEM.map(function(r){return r.w}),datasets:[{label:"Cashback",data:REDEM.map(function(r){return r.cb}),borderColor:C.p3,backgroundColor:C.p7+"80",fill:true,tension:0.3,borderWidth:2.5},{label:"Bill Discount",data:REDEM.map(function(r){return r.bd}),borderColor:C.b2,tension:0.3,borderWidth:2}]},options:{scales:{y:{max:35,ticks:{callback:function(v){return v+"%"}}}}}})
+      )
+    );
+  }
+
+  function renderUseCases() {
+    return e("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:14}},
+      e(Card,{span:2,accent:C.b2},
+        e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)"}},
+          e(KPI,{label:"Combined",value:"Rs.170M",color:C.b2}),
+          e(KPI,{label:"UC1",value:"Rs.70M",color:C.b4}),
+          e(KPI,{label:"UC2",value:"Rs.100M",color:C.p3}),
+          e(KPI,{label:"Overlap",value:"~60%",color:C.b3})
+        )
+      ),
+      e(Card,{title:"UC1: Enrichment",accent:C.b3},
+        e("div",{style:{background:C.lt,borderRadius:8,height:24,overflow:"hidden",marginBottom:8}},
+          e("div",{style:{height:"100%",borderRadius:8,background:C.b3,width:"65%",display:"flex",alignItems:"center",justifyContent:"center"}},
+            e("span",{style:{fontSize:10,fontWeight:700,color:"#fff"}},"65%"))),
+        e("div",{style:{fontSize:11,color:C.sub}},"Target: Rs.70M PBT")
+      ),
+      e(Card,{title:"UC2: Acquisition",accent:C.p3},
+        e("div",{style:{background:C.lt,borderRadius:8,height:24,overflow:"hidden",marginBottom:8}},
+          e("div",{style:{height:"100%",borderRadius:8,background:C.p3,width:"30%",display:"flex",alignItems:"center",justifyContent:"center"}},
+            e("span",{style:{fontSize:10,fontWeight:700,color:"#fff"}},"30%"))),
+        e("div",{style:{fontSize:11,color:C.sub}},"Target: Rs.100M PBT")
+      ),
+      e(Card,{span:2,title:"Performance Radar",accent:C.b2},
+        e(ChartBox,{type:"radar",h:280,data:{labels:["Spend Lift","New Cust","Retention","Basket","ROAS","Data Quality"],datasets:[{label:"UC1",data:[75,30,85,80,70,60],borderColor:C.b3,backgroundColor:C.b3+"20",borderWidth:2},{label:"UC2",data:[40,90,45,55,65,60],borderColor:C.p3,backgroundColor:C.p3+"20",borderWidth:2}]},options:{scales:{r:{min:0,max:100,ticks:{stepSize:25}}}}})
+      )
+    );
+  }
+
+  function renderDataQuality() {
+    return e("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}},
+      e(Card,{span:3,accent:C.b4},
+        e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)"}},
+          e(KPI,{label:"NIC",value:"43.5%",color:C.b2}),
+          e(KPI,{label:"Mobile",value:"47.1%",color:C.b4}),
+          e(KPI,{label:"Either",value:"59.8%",color:C.p3,trend:"up"}),
+          e(KPI,{label:"Both",value:"28.3%",color:C.p5})
+        )
+      ),
+      e(Card,{span:2,title:"Match Rates",accent:C.b3},
+        e(ChartBox,{type:"bar",h:260,data:{labels:MAPQ.map(function(m){return m.t}),datasets:[{data:MAPQ.map(function(m){return m.r}),backgroundColor:[C.b2,C.b4,C.p3,C.p5],borderRadius:6}]},options:{scales:{y:{max:100,ticks:{callback:function(v){return v+"%"}}}},plugins:{legend:{display:false}}}})
+      ),
+      e(Card,{title:"Resolution Flow",accent:C.b3},
+        e("div",{style:{fontSize:11,color:C.tx,lineHeight:1.8}},
+          ["NTB ingested","SHA-256 hash","JMSL ingested","Same salt hash","Identity match","IP: 84,129","6 segments"].map(function(s,i) {
+            return e("div",{key:i,style:{display:"flex",alignItems:"center",gap:8,padding:"3px 0"}},
+              e("span",{style:{width:18,height:18,borderRadius:"50%",background:i%2===0?C.b3:C.p3,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,flexShrink:0}},i+1),
+              e("span",null,s),
+              e("span",{style:{marginLeft:"auto"}},"✅")
+            );
+          })
+        )
+      )
+    );
+  }
+
+  function renderTracking() {
+    var totalNC = MONTHLY.reduce(function(a,m){return a+m.nc},0);
+    return e("div",{style:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:14}},
+      e(Card,{span:2,accent:C.b2},
+        e("div",{style:{display:"grid",gridTemplateColumns:"repeat(5,1fr)"}},
+          e(KPI,{label:"Card Spend",value:"Rs."+fmt(55e6),color:C.b3,trend:"up"}),
+          e(KPI,{label:"Basket",value:"Rs."+fmt(3650),color:C.b4,trend:"up"}),
+          e(KPI,{label:"New Cust",value:fmt(totalNC),color:C.p3,trend:"up"}),
+          e(KPI,{label:"Retention",value:"95%",color:C.p4,trend:"up"}),
+          e(KPI,{label:"Campaigns",value:"6",color:C.b5})
+        )
+      ),
+      e(Card,{title:"Card Spend (Rs.M)",accent:C.b3},
+        e(ChartBox,{type:"line",h:220,data:{labels:MONTHLY.map(function(m){return m.m}),datasets:[{data:MONTHLY.map(function(m){return m.cs}),borderColor:C.b3,backgroundColor:C.b6+"60",fill:true,tension:0.3,borderWidth:2.5}]},options:{scales:{y:{}},plugins:{legend:{display:false}}}})
+      ),
+      e(Card,{title:"Basket (Rs.)",accent:C.p3},
+        e(ChartBox,{type:"line",h:220,data:{labels:MONTHLY.map(function(m){return m.m}),datasets:[{data:MONTHLY.map(function(m){return m.bs}),borderColor:C.p3,tension:0.3,borderWidth:2.5,pointRadius:4,pointBackgroundColor:C.p3}]},options:{scales:{y:{min:2500,max:4000}},plugins:{legend:{display:false}}}})
+      ),
+      e(Card,{title:"New Customers",accent:C.b4},
+        e(ChartBox,{type:"bar",h:220,data:{labels:MONTHLY.map(function(m){return m.m}),datasets:[{data:MONTHLY.map(function(m){return m.nc}),backgroundColor:C.b4,borderRadius:6}]},options:{scales:{y:{}},plugins:{legend:{display:false}}}})
+      ),
+      e(Card,{title:"Retention %",accent:C.p4},
+        e(ChartBox,{type:"line",h:220,data:{labels:MONTHLY.map(function(m){return m.m}),datasets:[{data:MONTHLY.map(function(m){return m.rt}),borderColor:C.p4,tension:0.3,borderWidth:2.5,pointRadius:4,pointBackgroundColor:C.p4}]},options:{scales:{y:{min:85,max:100,ticks:{callback:function(v){return v+"%"}}}},plugins:{legend:{display:false}}}})
+      ),
+      e(Card,{span:2,title:"Tracker",accent:C.tx},
+        e("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:11}},
+          e("thead",null,e("tr",{style:{borderBottom:"2px solid "+C.bd}},
+            ["Workstream","Owner","Status","Target","Progress"].map(function(hd){return e("th",{key:hd,style:{padding:"8px 10px",textAlign:"left",color:C.tx,fontWeight:600}},hd)})
+          )),
+          e("tbody",null,WORKSTREAMS.map(function(r,i){
+            return e("tr",{key:i,style:{borderBottom:"1px solid "+C.lt}},
+              e("td",{style:{padding:"8px 10px",fontWeight:600,color:C.tx}},r.w),
+              e("td",{style:{padding:"8px 10px",color:C.sub}},r.o),
+              e("td",{style:{padding:"8px 10px"}},e(Dot,{s:r.s}),e("span",{style:{fontSize:10,color:C.sub}},r.s)),
+              e("td",{style:{padding:"8px 10px",color:C.sub}},r.d),
+              e("td",{style:{padding:"8px 10px"}},e(ProgBar,{pct:r.p,status:r.p===100?"completed":"running",h:16,w:100,fs:9}))
+            );
+          }))
+        )
+      )
+    );
+  }
+
+  // ===== CAMPAIGN WIZARD =====
+  function renderWizard() {
+    var stepNames = ["Select Source","Upload & Validate","Customer Mapping","Configure","Review & Launch"];
+    var stepBar = e("div",{style:{display:"flex",gap:4,marginBottom:24}},
+      stepNames.map(function(s,i) {
+        var done = i < wStep;
+        var active = i === wStep;
+        return e("div",{key:i,style:{flex:1}},
+          e("div",{style:{display:"flex",alignItems:"center",gap:6,marginBottom:4}},
+            e("div",{style:{width:22,height:22,borderRadius:"50%",background:done?C.b3:active?C.p3:C.lt,color:(done||active)?"#fff":C.mu,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700}}, done?"✓":String(i+1)),
+            e("span",{style:{fontSize:10,fontWeight:active?700:400,color:active?C.tx:C.mu}},s)
+          ),
+          e("div",{style:{height:3,borderRadius:2,background:done?C.b3:active?C.p3:C.lt}})
+        );
+      })
+    );
+
+    if (wDone) {
+      return e("div",null, stepBar, e(Card,{accent:C.b3},
+        e("div",{style:{textAlign:"center",padding:40}},
+          e("div",{style:{fontSize:48}},"🚀"),
+          e("div",{style:{fontSize:20,fontWeight:800,color:C.tx,marginTop:12}},"Campaign Launched!"),
+          e("div",{style:{fontSize:13,color:C.sub,marginTop:8}},'"'+wName+'" scheduled. Executed by '+wExec+" via "+wChan+"."),
+          e("div",{style:{display:"flex",gap:10,justifyContent:"center",marginTop:24}},
+            e(Btn,{onClick:resetWiz},"Create Another"),
+            e(Btn,{primary:true,onClick:function(){setView(7);resetWiz()}},"View Campaigns")
+          )
+        )
+      ));
+    }
+
+    if (wStep === 0) {
+      return e("div",null, stepBar, e(Card,{title:"Step 1 — Select Data Pipeline",accent:C.b2},
+        e("p",{style:{fontSize:12,color:C.sub,marginBottom:20}},"Choose the raw data pipeline to ingest."),
+        e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}},
+          e(SelCard,{sel:wSrc==="amex",onClick:function(){setWSrc("amex")},icon:"💳",title:"AMEX Base",desc:"NTB — 142,680 records",clr:C.b3}),
+          e(SelCard,{sel:wSrc==="nexus",onClick:function(){setWSrc("nexus")},icon:"🛒",title:"NEXUS Base",desc:"JMSL — 168,420 records",clr:C.p3})
+        ),
+        e("div",{style:{display:"flex",justifyContent:"flex-end",marginTop:20}},
+          e(Btn,{primary:true,disabled:!wSrc,onClick:function(){setWStep(1)}},"Continue")
+        )
+      ));
+    }
+
+    if (wStep === 1) {
+      var srcLabel = wSrc === "amex" ? "AMEX" : "NEXUS";
+      return e("div",null, stepBar, e(Card,{title:"Step 2 — Upload & Validate "+srcLabel,accent:wSrc==="amex"?C.b3:C.p3},
+        e("div",{style:{border:"2px dashed "+C.bd,borderRadius:12,padding:30,textAlign:"center",background:C.lt,marginBottom:20}},
+          e("div",{style:{fontSize:36}},"📁"),
+          e("div",{style:{fontSize:13,fontWeight:600,color:C.tx,marginTop:8}},"Drop file or click to browse"),
+          e(Btn,{small:true,onClick:function(){setWFile(srcLabel.toLowerCase()+"_Q4.csv")}}, wFile ? "✅ "+wFile : "Select File")
+        ),
+        wFile && !wVdone && !wVing ? e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
+          e("span",{style:{fontSize:12,color:C.sub}},"File: "+wFile),
+          e(Btn,{primary:true,onClick:doValidate},"Validate Data")
+        ) : null,
+        wVing ? e("div",{style:{textAlign:"center",padding:20}},
+          e("div",{style:{fontSize:13,fontWeight:600,color:C.b3}},"Validating..."),
+          e("div",{style:{background:C.lt,borderRadius:8,height:8,maxWidth:400,margin:"8px auto",overflow:"hidden"}},
+            e("div",{style:{height:"100%",borderRadius:8,background:"linear-gradient(90deg,"+C.b3+","+C.p3+")",width:"70%"}}))
+        ) : null,
+        wVdone ? e("div",null,
+          e("div",{style:{fontSize:13,fontWeight:700,color:C.b3,marginBottom:12}},"✅ Validation Complete"),
+          e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}},
+            [{l:"Total",v:fmt(valData.total),c:C.b2,bg:C.b7},{l:"Valid",v:fmt(valData.valid),c:C.b3,bg:C.b7},{l:"Invalid",v:fmt(valData.invalid),c:C.p3,bg:C.p7},{l:"Complete",v:valData.complete+"%",c:C.tx,bg:C.lt}].map(function(x,i){
+              return e("div",{key:i,style:{padding:12,background:x.bg,borderRadius:8,textAlign:"center"}},
+                e("div",{style:{fontSize:18,fontWeight:800,color:x.c}},x.v),
+                e("div",{style:{fontSize:10,color:C.sub}},x.l));
+            })
+          ),
+          e("div",{style:{display:"flex",justifyContent:"space-between"}},
+            e(Btn,{onClick:function(){setWStep(0);setWFile(null);setWVdone(false)}},"Back"),
+            e(Btn,{primary:true,onClick:function(){setWStep(2)}},"Proceed to Mapping")
+          )
+        ) : null
+      ));
+    }
+
+    if (wStep === 2) {
+      return e("div",null, stepBar, e(Card,{title:"Step 3 — Customer Identity Mapping",accent:C.b4},
+        e("p",{style:{fontSize:12,color:C.sub,marginBottom:16}},"Map using SHA-256 encoded Mobile & NIC. No PII exchanged."),
+        !wMdone && !wMing ? e("div",null,
+          e("div",{style:{padding:16,background:C.lt,borderRadius:10,marginBottom:16}},
+            e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}},
+              e("div",{style:{padding:10,background:C.bg,borderRadius:8,border:"1px solid "+C.bd}},e("div",{style:{fontSize:11,fontWeight:600,color:C.b2}},"🔐 Primary: SHA-256(Mobile)")),
+              e("div",{style:{padding:10,background:C.bg,borderRadius:8,border:"1px solid "+C.bd}},e("div",{style:{fontSize:11,fontWeight:600,color:C.p2}},"🔐 Secondary: SHA-256(NIC)"))
+            )
+          ),
+          e("div",{style:{display:"flex",justifyContent:"space-between"}},
+            e(Btn,{onClick:function(){setWStep(1)}},"Back"),
+            e(Btn,{primary:true,onClick:doMapping},"Run Identity Mapping")
+          )
+        ) : null,
+        wMing ? e("div",{style:{textAlign:"center",padding:30}},e("div",{style:{fontSize:13,fontWeight:600,color:C.p3}},"Mapping identities...")) : null,
+        wMdone ? e("div",null,
+          e("div",{style:{fontSize:13,fontWeight:700,color:C.b3,marginBottom:12}},"✅ Mapping Complete"),
+          e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:16}},
+            [{l:"Matched",v:fmt(mapData.matched),c:C.b2,bg:C.b7},{l:"NIC",v:fmt(mapData.nic),c:C.b4,bg:C.b7},{l:"Mobile",v:fmt(mapData.mobile),c:C.p3,bg:C.p7},{l:"Rate",v:mapData.rate+"%",c:C.b3,bg:C.b7}].map(function(x,i){
+              return e("div",{key:i,style:{padding:12,background:x.bg,borderRadius:8,textAlign:"center"}},
+                e("div",{style:{fontSize:18,fontWeight:800,color:x.c}},x.v),
+                e("div",{style:{fontSize:10,color:C.sub}},x.l));
+            })
+          ),
+          e("div",{style:{padding:14,background:C.lt,borderRadius:10,marginBottom:16}},
+            e("div",{style:{fontSize:12,fontWeight:700,color:C.tx,marginBottom:8}},"Available Segments"),
+            e("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}},
+              SEGS.map(function(s,i){
+                return e("div",{key:i,style:{padding:8,background:C.bg,borderRadius:6,borderLeft:"3px solid "+s.col,fontSize:11,display:"flex",justifyContent:"space-between"}},
+                  e("span",{style:{fontWeight:600,color:C.tx}},"S"+s.id+": "+s.name),
+                  e("span",{style:{fontWeight:700,color:s.col}},fmt(s.pop))
+                );
+              })
+            )
+          ),
+          e("div",{style:{display:"flex",justifyContent:"space-between"}},
+            e(Btn,{onClick:function(){setWStep(1);setWMdone(false)}},"Back"),
+            e(Btn,{primary:true,onClick:function(){setWStep(3)}},"Configure Campaign")
+          )
+        ) : null
+      ));
+    }
+
+    if (wStep === 3) {
+      return e("div",null, stepBar, e(Card,{title:"Step 4 — Configure Campaign",accent:C.p3},
+        e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}},
+          e("div",null,
+            e("div",{style:{fontSize:12,fontWeight:600,color:C.tx,marginBottom:6}},"Campaign Name"),
+            e("input",{value:wName,onChange:function(ev){setWName(ev.target.value)},placeholder:"e.g., Amex Spend Boost Q1",style:{width:"100%",padding:10,borderRadius:8,border:"1px solid "+C.bd,fontSize:13,color:C.tx,outline:"none"}}),
+            e("div",{style:{fontSize:12,fontWeight:600,color:C.tx,marginBottom:6,marginTop:16}},"Use Case"),
+            e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
+              e(SelCard,{sel:wUC==="Enrichment",onClick:function(){setWUC("Enrichment")},icon:"📈",title:"Enrichment",desc:"Increase spend",clr:C.b3}),
+              e(SelCard,{sel:wUC==="Acquisition",onClick:function(){setWUC("Acquisition")},icon:"🎯",title:"Acquisition",desc:"New customers",clr:C.p3})
+            ),
+            e("div",{style:{fontSize:12,fontWeight:600,color:C.tx,marginBottom:6,marginTop:16}},"Executor"),
+            e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}},
+              e(SelCard,{sel:wExec==="NTB",onClick:function(){setWExec("NTB")},icon:"🏦",title:"NTB (Bank)",desc:"Bank executes",clr:C.b3}),
+              e(SelCard,{sel:wExec==="Nexus",onClick:function(){setWExec("Nexus")},icon:"🛒",title:"Nexus (JMSL)",desc:"JMSL executes",clr:C.p3})
+            )
+          ),
+          e("div",null,
+            e("div",{style:{fontSize:12,fontWeight:600,color:C.tx,marginBottom:6}},"Channel"),
+            e("div",{style:{display:"grid",gap:8}},
+              e(ChkBox,{sel:wChan==="SMS",onClick:function(){setWChan("SMS")},label:"📱 SMS",sub:"Text message"}),
+              e(ChkBox,{sel:wChan==="App Notification",onClick:function(){setWChan("App Notification")},label:"🔔 App Notification",sub:"Push notification"}),
+              e(ChkBox,{sel:wChan==="API",onClick:function(){setWChan("API")},label:"🔗 API Integration",sub:"Real-time activation"})
+            ),
+            e("div",{style:{fontSize:12,fontWeight:600,color:C.tx,marginBottom:6,marginTop:16}},"Target Segments"),
+            e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}},
+              SEGS.map(function(s,i){
+                var key = "S"+s.id;
+                var sel = wSegs.indexOf(key) >= 0;
+                return e(ChkBox,{key:i,sel:sel,onClick:function(){setWSegs(function(prev){return sel ? prev.filter(function(x){return x!==key}) : prev.concat([key])})},label:"S"+s.id+": "+s.name,sub:fmt(s.pop)});
+              })
+            )
+          )
+        ),
+        e("div",{style:{display:"flex",justifyContent:"space-between",marginTop:20}},
+          e(Btn,{onClick:function(){setWStep(2)}},"Back"),
+          e(Btn,{primary:true,disabled:!wName||!wChan||!wExec||!wUC||!wSegs.length,onClick:function(){setWStep(4)}},"Review")
+        )
+      ));
+    }
+
+    if (wStep === 4) {
+      var reach = wSegs.reduce(function(a,key){var sg=SEGS.find(function(x){return "S"+x.id===key});return a+(sg?sg.pop:0)},0);
+      return e("div",null, stepBar, e(Card,{title:"Step 5 — Review & Launch",accent:C.b2},
+        e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}},
+          e("div",null,
+            e("div",{style:{fontSize:14,fontWeight:700,color:C.tx,marginBottom:12}},wName),
+            [{l:"Source",v:wSrc==="amex"?"AMEX":"NEXUS"},{l:"Use Case",v:wUC},{l:"Executor",v:wExec==="NTB"?"NTB (Bank)":"Nexus (JMSL)"},{l:"Channel",v:wChan},{l:"Segments",v:wSegs.join(", ")}].map(function(r,i){
+              return e("div",{key:i,style:{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid "+C.lt,fontSize:12}},
+                e("span",{style:{color:C.mu}},r.l),e("span",{style:{fontWeight:600,color:C.tx}},r.v));
+            })
+          ),
+          e("div",{style:{padding:16,background:C.lt,borderRadius:10}},
+            e("div",{style:{fontSize:12,fontWeight:700,color:C.tx,marginBottom:10}},"Estimated Reach"),
+            e("div",{style:{fontSize:28,fontWeight:800,color:C.b2}},fmt(reach)),
+            e("div",{style:{fontSize:11,color:C.sub}},wSegs.length+" segment(s)"),
+            e("div",{style:{marginTop:16,padding:10,background:wExec==="NTB"?C.b7:C.p7,borderRadius:8}},
+              e("div",{style:{fontSize:11,fontWeight:600,color:C.tx}},"Executed by: "+(wExec==="NTB"?"🏦 NTB":"🛒 Nexus")),
+              e("div",{style:{fontSize:10,color:C.sub,marginTop:4}},wExec==="NTB"?"NTB communicates to Bank customers only.":"JMSL communicates to Nexus customers only.")
+            )
+          )
+        ),
+        e("div",{style:{display:"flex",justifyContent:"space-between"}},
+          e(Btn,{onClick:function(){setWStep(3)}},"Back"),
+          e(Btn,{primary:true,onClick:launchCampaign},"🚀 Launch Campaign")
+        )
+      ));
+    }
+
+    return e("div",null, stepBar);
+  }
+
+  // ===== CAMPAIGNS =====
+  function renderCampaigns() {
+    var comp = camps.filter(function(c){return c.st==="completed"});
+    var run = camps.filter(function(c){return c.st==="running"});
+    var sch = camps.filter(function(c){return c.st==="scheduled"});
+    var totalSent = camps.reduce(function(a,c){return a+c.sn},0);
+    var totalConv = camps.reduce(function(a,c){return a+c.cv},0);
+    var avgHR = totalSent > 0 ? (totalConv/totalSent*100).toFixed(1) : "0";
+
+    var chData = ["SMS","App Notification","API"].map(function(ch){
+      var cs = camps.filter(function(c){return c.ch===ch});
+      return {ch:ch, sn:cs.reduce(function(a,c){return a+c.sn},0), cv:cs.reduce(function(a,c){return a+c.cv},0)};
+    });
+
+    var exData = ["NTB","Nexus"].map(function(ex){
+      var cs = camps.filter(function(c){return c.ex===ex});
+      var sn = cs.reduce(function(a,c){return a+c.sn},0);
+      var cv = cs.reduce(function(a,c){return a+c.cv},0);
+      return {ex:ex, cnt:cs.length, sn:sn, cv:cv, hr:sn>0?(cv/sn*100).toFixed(1):"0"};
+    });
+
+    return e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}},
+      e(Card,{span:4,accent:C.b2},
+        e("div",{style:{display:"grid",gridTemplateColumns:"repeat(6,1fr)"}},
+          e(KPI,{label:"Total Campaigns",value:String(camps.length),color:C.b2}),
+          e(KPI,{label:"Completed",value:String(comp.length),color:C.b3}),
+          e(KPI,{label:"Running",value:String(run.length),color:C.p3}),
+          e(KPI,{label:"Scheduled",value:String(sch.length),color:C.b5}),
+          e(KPI,{label:"Total Delivered",value:fmt(totalSent),color:C.b4}),
+          e(KPI,{label:"Avg Conversion",value:avgHR+"%",color:C.p3,trend:"up"})
+        )
+      ),
+      e(Card,{span:2,title:"Conversion by Channel",accent:C.b3},
+        e(ChartBox,{type:"bar",h:200,data:{labels:chData.map(function(x){return x.ch}),datasets:[{label:"Sent",data:chData.map(function(x){return x.sn}),backgroundColor:C.b5,borderRadius:4},{label:"Converted",data:chData.map(function(x){return x.cv}),backgroundColor:C.b2,borderRadius:4}]},options:{scales:{y:{}},plugins:{legend:{position:"top"}}}})
+      ),
+      e(Card,{span:2,title:"Performance by Executor",accent:C.p3},
+        e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+          exData.map(function(ex,i){
+            return e("div",{key:i,style:{padding:16,background:i===0?C.b7:C.p7,borderRadius:10}},
+              e("div",{style:{fontSize:14,fontWeight:700,color:C.tx}},ex.ex==="NTB"?"🏦 NTB (Bank)":"🛒 Nexus (JMSL)"),
+              e("div",{style:{marginTop:10,display:"grid",gap:6}},
+                [{l:"Campaigns",v:String(ex.cnt)},{l:"Sent",v:fmt(ex.sn)},{l:"Converted",v:fmt(ex.cv)},{l:"Hit Rate",v:ex.hr+"%"}].map(function(r,j){
+                  return e("div",{key:j,style:{display:"flex",justifyContent:"space-between",fontSize:11}},
+                    e("span",{style:{color:C.sub}},r.l),
+                    e("span",{style:{fontWeight:700,color:j===3?(i===0?C.b3:C.p3):C.tx}},r.v));
+                })
+              )
+            );
+          })
+        )
+      ),
+      e(Card,{span:4,title:"All Campaigns",accent:C.tx},
+        e("div",{style:{overflowX:"auto"}},
+          e("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:11}},
+            e("thead",null,e("tr",{style:{borderBottom:"2px solid "+C.bd}},
+              ["ID","Name","UC","Executor","Channel","Segment","Audience","Delivered","Converted","Hit Rate","Status","Progress"].map(function(hd){
+                return e("th",{key:hd,style:{padding:"8px 6px",textAlign:"left",color:C.tx,fontWeight:600,whiteSpace:"nowrap"}},hd);
+              })
+            )),
+            e("tbody",null,camps.map(function(c,i){
+              var hr = c.sn>0 ? (c.cv/c.sn*100).toFixed(1) : "—";
+              var pr = c.st==="completed" ? 100 : c.st==="running" ? Math.round(c.sn>0?(c.dl/c.sn)*70:40) : 0;
+              var hrColor = parseFloat(hr)>10 ? C.b3 : parseFloat(hr)>5 ? C.p3 : C.mu;
+              return e("tr",{key:i,style:{borderBottom:"1px solid "+C.lt}},
+                e("td",{style:{padding:"8px 6px",fontWeight:600,color:C.b3}},c.id),
+                e("td",{style:{padding:"8px 6px",color:C.tx,maxWidth:160}},c.nm),
+                e("td",{style:{padding:"8px 6px"}},e("span",{style:{fontSize:10,padding:"2px 6px",borderRadius:6,background:c.uc==="Enrichment"?C.b7:C.p7,color:c.uc==="Enrichment"?C.b1:C.p1,fontWeight:600}},c.uc)),
+                e("td",{style:{padding:"8px 6px"}},e("span",{style:{fontSize:10,padding:"2px 6px",borderRadius:6,background:c.ex==="NTB"?C.b7:C.p7,color:c.ex==="NTB"?C.b1:C.p1,fontWeight:600}},c.ex)),
+                e("td",{style:{padding:"8px 6px",color:C.sub}},c.ch),
+                e("td",{style:{padding:"8px 6px",color:C.sub,fontSize:10}},c.sg),
+                e("td",{style:{padding:"8px 6px",fontWeight:600}},fmt(c.au)),
+                e("td",{style:{padding:"8px 6px"}},c.dl>0?fmt(c.dl):"—"),
+                e("td",{style:{padding:"8px 6px",fontWeight:600}},c.cv>0?fmt(c.cv):"—"),
+                e("td",{style:{padding:"8px 6px",fontWeight:700,color:hrColor}},hr,hr!=="—"?"%":""),
+                e("td",{style:{padding:"8px 6px"}},e(Dot,{s:c.st}),e("span",{style:{fontSize:10,color:C.sub}},c.st)),
+                e("td",{style:{padding:"8px 6px"}},e(ProgBar,{pct:pr,status:c.st}))
+              );
+            }))
+          )
+        )
+      ),
+      e(Card,{span:4,title:"Campaign Funnel",accent:C.b4},
+        e(ChartBox,{type:"bar",h:220,data:{labels:["Audience","Sent","Delivered","Opened","Converted"],datasets:[{data:[
+          camps.reduce(function(a,c){return a+c.au},0),
+          totalSent,
+          camps.reduce(function(a,c){return a+c.dl},0),
+          camps.reduce(function(a,c){return a+c.op},0),
+          totalConv
+        ],backgroundColor:[C.b2,C.b4,C.b5,C.p4,C.p2],borderRadius:6}]},options:{scales:{y:{ticks:{callback:function(v){return fmt(v)}}}},plugins:{legend:{display:false}}}})
+      )
+    );
+  }
+
+  // ===== MAIN RENDER =====
+  var renderers = [renderOverview, renderSegmentation, renderPilot, renderUseCases, renderDataQuality, renderTracking, renderWizard, renderCampaigns];
+
+  return e("div",{style:{maxWidth:960,margin:"0 auto",padding:20,background:C.bg,minHeight:"100vh"}},
+    e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:20}},
+      e("div",null,
+        e("h1",{style:{fontSize:20,color:C.tx,margin:0}},"AMEX × NEXUS — Partnership Dashboard"),
+        e("p",{style:{fontSize:12,color:C.sub,margin:"4px 0 0"}},"NTB × JMSL • Enabled by OCTAVE")
+      ),
+      e("div",{style:{textAlign:"right"}},
+        e("div",{style:{fontSize:11,fontWeight:600,color:C.tx}},"Intersection Population"),
+        e("div",{style:{fontSize:18,fontWeight:800,color:C.b2}},"84,129")
+      )
+    ),
+    e("div",{style:{display:"flex",gap:5,marginBottom:20,flexWrap:"wrap"}},
+      TABS.map(function(t,i){
+        return e("button",{key:i,onClick:function(){setView(i)},style:{padding:"7px 12px",borderRadius:8,border:view===i?"none":"1px solid "+C.bd,fontSize:11,fontWeight:600,background:view===i?C.b2:C.bg,color:view===i?"#fff":C.sub,boxShadow:view===i?"0 2px 8px rgba(12,36,97,.3)":"0 1px 3px rgba(0,0,0,.06)"}},t);
+      })
+    ),
+    renderers[view]()
+  );
+}
+
+ReactDOM.render(e(App), document.getElementById("root"));
+</script>
+</body>
+</html>
