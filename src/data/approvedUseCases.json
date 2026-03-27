@@ -42,6 +42,20 @@
     "demoPath": "/demos/customer-retention/demo.html"
   },
   {
+    "id": "audit-universe-for-bfs",
+    "title": "Audit universe for BFS",
+    "industry": "Banking & Financial Services",
+    "valueChain": "Underwriting & Risk",
+    "tagline": "Audit Universe",
+    "status": "approved",
+    "complexity": "Medium",
+    "roi": "Overall Risk Reduction",
+    "deployTime": "6",
+    "publishedDate": "2026-03-27",
+    "hasDemo": true,
+    "demoPath": "/demos/audit-universe-for-bfs/demo.html"
+  },
+  {
     "id": "factory-production-planning",
     "title": "Factory Production Planning",
     "industry": "FMCG",
