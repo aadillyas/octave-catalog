@@ -221,7 +221,8 @@
           "useCases": [
             "Churn Prediction",
             "Next Best Action",
-            "CLV Modelling"
+            "CLV Modelling",
+            "Customer Retention"
           ]
         },
         {
